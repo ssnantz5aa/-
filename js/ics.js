@@ -61,3 +61,29 @@ export function toIcs(events) {
   const body = events.map(vevent).filter(Boolean);
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Slate//Schedule//KO', 'CALSCALE:GREGORIAN', ...VTIMEZONE, ...body, 'END:VCALENDAR'].join('\r\n');
 }
+
+/** Google 캘린더 일정 추가 링크. 파일 다운로드가 막힌 환경에서도 새 탭으로 열린다. */
+export function googleCalendarUrl(e) {
+  if (!e.date) return null;
+  const day = e.date.replace(/-/g, '');
+  const start = e.startTime || e.callTime;
+  let dates;
+  if (start) {
+    const endMin = e.endTime ? toMinutes(e.endTime) : toMinutes(start) + 60;
+    const endDay = endMin <= toMinutes(start) || endMin >= 1440 ? toYmd(addDays(fromYmd(e.date), 1)).replace(/-/g, '') : day;
+    dates = `${day}T${start.replace(':', '')}00/${endDay}T${fromMinutes(endMin).replace(':', '')}00`;
+  } else {
+    dates = `${day}/${toYmd(addDays(fromYmd(e.date), 1)).replace(/-/g, '')}`;
+  }
+  const details = [
+    e.callTime && `집합: ${e.callTime}`,
+    (e.contactName || e.phone) && `연락처: ${[e.contactName, e.phone].filter(Boolean).join(' ')}`,
+    e.agency && `에이전시: ${e.agency}`,
+    e.pay != null && `페이: ${formatWon(e.pay)}${e.payNote ? ` (${e.payNote})` : ''}`,
+    e.notes,
+  ].filter(Boolean).join('\n');
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates, ctz: 'Asia/Seoul' });
+  if (details) params.set('details', details);
+  if (e.location) params.set('location', e.location.replace(/\n/g, ', '));
+  return `https://calendar.google.com/calendar/render?${params}`;
+}

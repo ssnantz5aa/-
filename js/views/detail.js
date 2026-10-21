@@ -5,7 +5,7 @@ import { formatDateLong, formatTime, formatTimeRange, relativeLabel, todayYmd } 
 import { formatWon, formatWonShort } from '../parser.js';
 import { typeLabel } from '../types.js';
 import { emptyState } from '../components.js';
-import { toIcs } from '../ics.js';
+import { toIcs, googleCalendarUrl } from '../ics.js';
 
 const row = (iconName, label, body) => `
   <div class="info-row">
@@ -77,6 +77,7 @@ export function render(root, { id }) {
       }
 
       <div class="detail__actions">
+        ${e.date ? `<a class="list-btn" href="${esc(googleCalendarUrl(e))}" target="_blank" rel="noopener">${icon('calendar')}<span>Google 캘린더에 추가</span><small>새 탭</small></a>` : ''}
         <button type="button" class="list-btn" id="export">${icon('download')}<span>iPhone 캘린더로 내보내기</span><small>.ics</small></button>
         <button type="button" class="list-btn" id="duplicate">${icon('copy')}<span>복제해서 새 일정 만들기</span></button>
         <button type="button" class="list-btn list-btn--danger" id="delete">${icon('trash')}<span>일정 삭제</span></button>
