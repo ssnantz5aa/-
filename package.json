@@ -1,0 +1,11 @@
+{
+  "name": "slate-schedule",
+  "version": "1.0.0",
+  "private": true,
+  "description": "붙여넣은 일정 텍스트를 규칙 기반으로 분석해 캘린더에 등록하는 모바일 우선 웹앱",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.js"
+  }
+}
