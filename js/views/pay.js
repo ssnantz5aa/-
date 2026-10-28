@@ -54,7 +54,7 @@ function dueBadge(e, today) {
 }
 
 function dateCol(ymd, today) {
-  if (!ymd) return '<span class="pay-row__date"><span class="num">–</span><small>미정</small></span>';
+  if (!ymd) return '<span class="pay-row__date"><small>날짜</small><small>미정</small></span>';
   const d = fromYmd(ymd);
   return `<span class="pay-row__date ${ymd === today ? 'is-today' : ''}">
     <small class="pay-row__month num">${d.getMonth() + 1}월</small>
@@ -106,14 +106,14 @@ export function render(root) {
 
     ${
       hasAny
-        ? `<div class="pay-summary">
+        ? `<div class="pay-summary ${g.unpaid.length ? '' : 'is-settled'}">
             <div class="pay-summary__main">
-              <span class="pay-summary__label">아직 안 들어온 페이</span>
+              <span class="pay-summary__label">${g.unpaid.length ? '받을 페이' : g.upcoming.length ? '현재 미입금 없음' : '입금 확인 완료'}</span>
               <span class="pay-summary__amount num">${formatWon(sum(g.unpaid))}</span>
             </div>
             <div class="pay-summary__facts">
               <span><span class="num">${g.unpaid.length}</span>건</span>
-              ${late.length ? `<span class="is-late">지연 <span class="num">${late.length}</span>건</span>` : ''}
+              ${late.length ? `<span class="is-late">지급 지연 ${late.length}건 · ${formatWonShort(sum(late))}</span>` : ''}
               <span>최근 30일 입금 <span class="num">${formatWonShort(sum(g.recent)) || '0원'}</span></span>
             </div>
           </div>`
@@ -175,7 +175,8 @@ export function render(root) {
   });
 
   $$('[data-toggle]', root).forEach((b) =>
-    b.addEventListener('click', () => {
+    b.addEventListener('click', async () => {
+      if (b.disabled) return;
       const e = store.get(b.dataset.toggle);
       if (!e) return;
       const prev = { paid: e.paid === true, paidAt: e.paidAt || null };
@@ -185,6 +186,13 @@ export function render(root) {
         toast(err.message, { kind: 'error' });
         return;
       }
+      b.disabled = true;
+      b.classList.toggle('is-on', !prev.paid);
+      b.classList.add('is-confirming');
+      const row = b.closest('.pay-row');
+      row.classList.add('is-updating');
+      await new Promise((resolve) => setTimeout(resolve, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 320));
+      if (!row.isConnected) return;
       render(root);
       toast(prev.paid ? `‘${e.title}’ 미입금으로 되돌렸어요` : `‘${e.title}’ 입금 완료`, {
         kind: 'success',

@@ -19,7 +19,7 @@ export function render(root) {
   root.innerHTML = `
     <header class="page-head">
       <h1 class="title">새 일정</h1>
-      <p class="page-head__desc">메시지, 메일, 공지에서 일정이 담긴 부분을 그대로 붙여넣으세요. 기기 안에서 규칙에 따라 분석하며 외부로 전송하지 않아요.</p>
+      <p class="page-head__desc">실장님이 보낸 메시지를 붙여넣으세요. 캘린더에 담기 전, 한 번 더 확인할 수 있어요.</p>
     </header>
 
     <section class="compose" id="compose">
@@ -97,6 +97,8 @@ export function render(root) {
       onEnd: () => {
         wrap.classList.remove('is-busy');
         input.readOnly = false;
+        analyze.querySelector('span').textContent = '일정 분석';
+        sync();
       },
     }),
   );

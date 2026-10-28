@@ -61,7 +61,7 @@ export function render(root, { id, query } = {}) {
             ? row('won', '페이', `
                 ${e.pay != null ? `<p class="info-row__value amount num">${formatWon(e.pay)}<span class="amount__short">${formatWonShort(e.pay) !== formatWon(e.pay) ? formatWonShort(e.pay) : ''}</span></p>` : '<p class="info-row__value muted">금액 미정</p>'}
                 <dl class="pay-facts">
-                  <div><dt>세금공제</dt><dd>${e.tax ? esc(e.tax) : '<span class="muted">—</span>'}</dd></div>
+                  <div><dt>세금공제</dt><dd>${e.tax ? esc(e.tax) : '<span class="muted">미정</span>'}</dd></div>
                   <div><dt>지급일</dt><dd>${e.payDate ? `<span class="num">${formatDateMedium(e.payDate)}</span>` : '<span class="muted">미정</span>'}</dd></div>
                   ${e.payNote ? `<div><dt>조건</dt><dd>${esc(e.payNote)}</dd></div>` : ''}
                 </dl>
