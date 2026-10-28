@@ -1,7 +1,6 @@
 import { store } from '../store.js';
 import { $, $$, toast, confirmSheet, download } from '../ui.js';
 import { icon } from '../icons.js';
-import { TYPES } from '../types.js';
 import { toIcs } from '../ics.js';
 import { todayYmd } from '../dates.js';
 
@@ -26,13 +25,6 @@ export function render(root) {
         <div class="setting"><span class="setting__label">주 시작 요일</span>${seg('weekStart', [[0, '일요일'], [1, '월요일']], s.weekStart)}</div>
         <div class="setting"><span class="setting__label">시간 표시</span>${seg('timeFormat', [['12h', '오전/오후'], ['24h', '24시간']], s.timeFormat)}</div>
         <div class="setting"><span class="setting__label">기본 캘린더 보기</span>${seg('defaultView', [['month', '월'], ['week', '주'], ['day', '일']], s.defaultView)}</div>
-      </div>
-    </section>
-
-    <section class="group">
-      <h2 class="group__title">일정 유형</h2>
-      <div class="group__body legend">
-        ${TYPES.map((t) => `<span class="legend__item"><span class="type-dot" data-type="${t.id}"></span>${t.label}</span>`).join('')}
       </div>
     </section>
 

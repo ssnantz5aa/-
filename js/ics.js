@@ -1,7 +1,7 @@
 // iCalendar(.ics) 내보내기 — 아이폰 캘린더 등 외부 캘린더로 옮길 때 사용한다.
 import { addDays, fromMinutes, fromYmd, toMinutes, toYmd } from './dates.js';
 import { formatWon } from './parser.js';
-import { typeLabel } from './types.js';
+import { download } from './ui.js';
 
 const esc = (s) => String(s ?? '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
 
@@ -44,12 +44,12 @@ function vevent(e) {
   lines.push(`SUMMARY:${esc(e.title)}`);
   if (e.location) lines.push(`LOCATION:${esc(e.location.replace(/\n/g, ', '))}`);
   const desc = [
-    `유형: ${typeLabel(e.type)}`,
     e.callTime && `집합: ${e.callTime}`,
     (e.contactName || e.phone) && `연락처: ${[e.contactName, e.phone].filter(Boolean).join(' ')}`,
     e.agency && `에이전시: ${e.agency}`,
     e.pay != null && `페이: ${formatWon(e.pay)}${e.payNote ? ` (${e.payNote})` : ''}`,
     e.notes && `\n${e.notes}`,
+    e.memo && `\n메모: ${e.memo}`,
   ].filter(Boolean);
   lines.push(`DESCRIPTION:${esc(desc.join('\n'))}`, 'END:VEVENT');
   return lines.map(fold).join('\r\n');
@@ -81,9 +81,26 @@ export function googleCalendarUrl(e) {
     e.agency && `에이전시: ${e.agency}`,
     e.pay != null && `페이: ${formatWon(e.pay)}${e.payNote ? ` (${e.payNote})` : ''}`,
     e.notes,
+    e.memo && `메모: ${e.memo}`,
   ].filter(Boolean).join('\n');
   const params = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates, ctz: 'Asia/Seoul' });
   if (details) params.set('details', details);
   if (e.location) params.set('location', e.location.replace(/\n/g, ', '));
   return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/**
+ * 기기의 캘린더 앱으로 일정을 보낸다.
+ * 아이폰에서는 캘린더 데이터를 직접 열어 iOS의 '일정 추가' 화면을 띄우고,
+ * 그 밖의 기기에서는 .ics 파일을 내려받는다.
+ */
+export function openInDeviceCalendar(e) {
+  const ics = toIcs([e]);
+  if (isIOS()) {
+    location.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
+    return;
+  }
+  download(`${e.title.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'schedule'}.ics`, ics, 'text/calendar;charset=utf-8');
 }

@@ -1,10 +1,10 @@
 import { store, session } from '../store.js';
 import { esc, $, $$, autoGrow, toast, confirmSheet, go } from '../ui.js';
 import { icon } from '../icons.js';
-import { TYPES } from '../types.js';
 import { formatDateMedium, formatTime } from '../dates.js';
 import { formatPhone, formatWonShort, countFields } from '../parser.js';
 import { emptyState } from '../components.js';
+import { openInDeviceCalendar } from '../ics.js';
 
 // 선택 입력 항목. 값이 없으면 숨기고 '추가' 칩으로만 보여 준다.
 const OPTIONAL = [
@@ -80,12 +80,6 @@ export function render(root, { id } = {}) {
     ${sparse ? `<div class="banner banner--warn">${icon('info', { size: 18 })}<div><strong>일정 정보를 충분히 찾지 못했어요</strong><p>날짜와 시간을 직접 선택하고 필요한 항목을 추가해 주세요.</p></div></div>` : ''}
 
     <form class="editor" id="editor" novalidate>
-      <div class="type-picker" role="radiogroup" aria-label="일정 유형">
-        ${TYPES.map(
-          (t) => `<button type="button" role="radio" class="type-chip" data-type="${t.id}" aria-checked="${d.type === t.id}"><span class="type-dot" data-type="${t.id}"></span>${t.label}</button>`,
-        ).join('')}
-      </div>
-
       <div class="editor__title">
         <textarea id="f-title" class="title-input" rows="1" placeholder="일정 제목" aria-label="일정 제목" maxlength="120">${esc(d.title)}</textarea>
         <div data-hint="title">${hint(d.uncertain.title)}</div>
@@ -140,6 +134,15 @@ export function render(root, { id } = {}) {
         ${fieldBlock('notes', `<textarea class="field__input" id="f-notes" rows="2" placeholder="준비물, 의상, 주의사항 등" data-key="notes">${esc(d.notes)}</textarea>`)}
       </div>
 
+      <div class="field field--memo">
+        <span class="field__icon">${icon('edit')}</span>
+        <div class="field__main">
+          <label class="field__label" for="f-memo">메모</label>
+          <textarea class="field__input" id="f-memo" rows="2" placeholder="직접 남길 메모를 적어 주세요" data-key="memo">${esc(d.memo || '')}</textarea>
+        </div>
+        <span></span>
+      </div>
+
       <div class="add-fields" id="add-fields">
         <span class="add-fields__label">항목 추가</span>
         <div class="add-fields__chips">
@@ -159,7 +162,7 @@ export function render(root, { id } = {}) {
     ${editing ? `<button type="button" class="btn btn--text btn--danger-text delete-link" id="delete">${icon('trash', { size: 18 })}<span>일정 삭제</span></button>` : ''}
 
     <div class="action-bar">
-      <button type="button" class="btn btn--primary btn--lg btn--grow" id="save">${icon('calendar', { size: 18 })}<span>${editing ? '변경사항 저장' : '캘린더에 등록'}</span></button>
+      <button type="button" class="btn btn--primary btn--lg btn--grow" id="save">${icon('calendar', { size: 18 })}<span>${editing ? '변경사항 저장' : '아이폰 캘린더에 추가'}</span></button>
     </div>`;
 
   function fieldBlock(key, inner, warn) {
@@ -195,13 +198,6 @@ export function render(root, { id } = {}) {
     persistDraft();
   });
 
-  $$('.type-chip', root).forEach((chip) =>
-    chip.addEventListener('click', () => {
-      d.type = chip.dataset.type;
-      $$('.type-chip', root).forEach((c) => c.setAttribute('aria-checked', String(c === chip)));
-      persistDraft();
-    }),
-  );
 
   // 날짜·시간 알약: 투명한 기본 입력을 덮어 아이폰 기본 선택기를 그대로 사용한다.
   const bindPill = (inputId, pillId, key, format, placeholder) => {
@@ -330,7 +326,7 @@ export function render(root, { id } = {}) {
       pill.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    if (!d.title.trim()) d.title = `${TYPES.find((t) => t.id === d.type)?.label ?? ''} 일정`.trim();
+    if (!d.title.trim()) d.title = '새 일정';
 
     let saved;
     try {
@@ -341,16 +337,19 @@ export function render(root, { id } = {}) {
     }
     saveBtn.disabled = true;
     saveBtn.classList.add('is-done');
-    saveBtn.innerHTML = `${icon('check', { size: 18 })}<span>${editing ? '저장됨' : '등록 완료'}</span>`;
-    if (!editing) {
-      session.set('draft', null);
-      session.set('compose', null);
+    saveBtn.innerHTML = `${icon('check', { size: 18 })}<span>${editing ? '저장됨' : '추가 화면 여는 중'}</span>`;
+    if (editing) {
+      setTimeout(() => {
+        toast('변경사항을 저장했어요', { kind: 'success' });
+        go(`#/event/${saved.id}`);
+      }, 380);
+      return;
     }
-    setTimeout(() => {
-      toast(editing ? '변경사항을 저장했어요' : '캘린더에 등록했어요', { kind: 'success' });
-      if (editing) go(`#/event/${saved.id}`);
-      else go(`#/calendar?date=${saved.date}&focus=${saved.id}`);
-    }, 380);
+    session.set('draft', null);
+    session.set('compose', null);
+    // 상세 화면으로 먼저 옮긴 뒤 아이폰 캘린더의 일정 추가 화면을 연다.
+    go(`#/event/${saved.id}`);
+    setTimeout(() => openInDeviceCalendar(saved), 250);
   });
 
   $('#delete', root)?.addEventListener('click', async () => {

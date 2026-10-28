@@ -57,12 +57,8 @@
   color-scheme: light;
 }
 
-[data-type='shoot'] { --c: var(--t-shoot); }
-[data-type='event'] { --c: var(--t-event); }
-[data-type='meeting'] { --c: var(--t-meeting); }
-[data-type='audition'] { --c: var(--t-audition); }
-[data-type='lesson'] { --c: var(--t-lesson); }
-[data-type='etc'] { --c: var(--t-etc); }
+/* 일정 유형 구분 없이 모든 일정에 포인트 컬러를 쓴다. */
+[data-type] { --c: var(--accent); }
 
 /* ── 기본 ─────────────────────────────────────────── */
 *,
@@ -828,7 +824,7 @@ body.is-flow .tabbar { display: none; }
 
 /* ── 일정 상세 ─────────────────────────────────────── */
 .detail__head { padding: 4px 0 22px; border-bottom: 1px solid var(--line); }
-.detail__type { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--c); }
+.detail__type { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
 .detail__type .dot-sep { margin: 0 2px; }
 .detail__title { margin: 10px 0 16px; font-size: 26px; font-weight: 700; line-height: 1.32; letter-spacing: -0.03em; }
 .detail__date { font-size: 15px; font-weight: 500; color: var(--ink-2); }

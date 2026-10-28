@@ -49,7 +49,7 @@ export async function analyzeAndReview(text, { onStart, onEnd } = {}) {
 export function startManual(date) {
   session.set('draft', {
     title: '', type: 'etc', date: date || null, startTime: null, endTime: null, callTime: null,
-    location: '', contactName: '', phone: '', agency: '', pay: null, payNote: '', notes: '', raw: '',
+    location: '', contactName: '', phone: '', agency: '', pay: null, payNote: '', notes: '', memo: '', raw: '',
     uncertain: {}, source: 'manual',
   });
   go('#/review');

@@ -36,7 +36,7 @@ function persist() {
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`);
 
-const EVENT_FIELDS = ['title', 'type', 'date', 'startTime', 'endTime', 'callTime', 'location', 'contactName', 'phone', 'agency', 'pay', 'payNote', 'notes', 'raw'];
+const EVENT_FIELDS = ['title', 'type', 'date', 'startTime', 'endTime', 'callTime', 'location', 'contactName', 'phone', 'agency', 'pay', 'payNote', 'notes', 'memo', 'raw'];
 
 function sanitize(input) {
   const e = {};
