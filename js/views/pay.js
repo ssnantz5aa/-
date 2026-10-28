@@ -50,7 +50,7 @@ function dueBadge(e, today) {
   const n = diffDays(fromYmd(e.payDate), fromYmd(today));
   if (n < 0) return `<span class="pay-badge pay-badge--late">지연 <span class="num">${-n}</span>일</span>`;
   if (n === 0) return '<span class="pay-badge pay-badge--today">오늘 지급</span>';
-  return `<span class="pay-badge">D-<span class="num">${n}</span></span>`;
+  return `<span class="pay-badge"><span class="num">D-${n}</span></span>`;
 }
 
 function dateCol(ymd, today) {
