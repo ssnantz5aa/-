@@ -80,8 +80,8 @@ export function formatTimeRange(start, end, format = '12h') {
   if (!end) return formatTime(start, format);
   const a = timeParts(start, format);
   const b = timeParts(end, format);
-  if (format === '12h' && a.meridiem === b.meridiem) return `${a.meridiem} ${a.clock} – ${b.clock}`;
-  return `${formatTime(start, format)} – ${formatTime(end, format)}`;
+  if (format === '12h' && a.meridiem === b.meridiem) return `${a.meridiem} ${a.clock} ~ ${b.clock}`;
+  return `${formatTime(start, format)} ~ ${formatTime(end, format)}`;
 }
 
 /** '10월 24일 금요일' */

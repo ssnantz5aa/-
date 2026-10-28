@@ -39,11 +39,16 @@ export function confirmSheet({ title, message = '', confirm = '확인', cancel =
           <button type="button" class="btn ${danger ? 'btn--danger' : 'btn--primary'} btn--lg" data-ok>${esc(confirm)}</button>
         </div>
       </div>`;
-    host.classList.add('is-open');
+    let closed = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!closed) host.classList.add('is-open');
+    }));
     const done = (v) => {
+      if (closed) return;
+      closed = true;
       host.classList.remove('is-open');
       document.removeEventListener('keydown', onKey);
-      setTimeout(() => (host.innerHTML = ''), 180);
+      setTimeout(() => (host.innerHTML = ''), 320);
       resolve(v);
     };
     const onKey = (e) => e.key === 'Escape' && done(false);

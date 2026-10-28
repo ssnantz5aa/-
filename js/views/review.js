@@ -104,7 +104,7 @@ export function render(root, { id } = {}) {
             <span class="pill__text num">${d.startTime ? formatTime(d.startTime, fmt) : '시작 시간'}</span>
             <input type="time" id="f-start" value="${esc(d.startTime || '')}" aria-label="시작 시간">
           </label>
-          <span class="when__sep" aria-hidden="true">–</span>
+          <span class="when__sep" aria-hidden="true">~</span>
           <label class="pill ${d.endTime ? '' : 'is-empty'}" id="pill-end">
             <span class="pill__text num">${d.endTime ? formatTime(d.endTime, fmt) : '종료 시간'}</span>
             <input type="time" id="f-end" value="${esc(d.endTime || '')}" aria-label="종료 시간">

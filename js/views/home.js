@@ -95,7 +95,11 @@ export function render(root) {
         analyzeBtn.disabled = true;
         analyzeBtn.querySelector('span').textContent = '분석 중';
       },
-      onEnd: () => composer.classList.remove('is-busy'),
+      onEnd: () => {
+        composer.classList.remove('is-busy');
+        analyzeBtn.querySelector('span').textContent = '일정 분석';
+        sync();
+      },
     }),
   );
 }
