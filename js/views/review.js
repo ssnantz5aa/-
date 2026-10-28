@@ -136,14 +136,14 @@ export function render(root, { id } = {}) {
           </div>
           <div class="pay-meta">
             <div class="pay-meta__row">
-              <span class="pay-meta__label">세금공제</span>
+              <label class="pay-meta__label" for="f-tax">세금공제</label>
               <input class="field__input pay-meta__input" id="f-tax" placeholder="없으면 비워 두세요" value="${esc(d.tax || '')}" data-key="tax" autocomplete="off">
             </div>
             <div class="tax-presets" role="group" aria-label="세금공제 빠른 선택">
               ${TAX_PRESETS.map((t) => `<button type="button" class="tax-chip" data-tax="${t}" aria-pressed="${d.tax === t}">${t}</button>`).join('')}
             </div>
             <div class="pay-meta__row">
-              <span class="pay-meta__label">지급일</span>
+              <label class="pay-meta__label" for="f-paydate">지급일</label>
               <label class="pill ${d.payDate ? '' : 'is-empty'} ${d.uncertain.payDate ? 'is-warn' : ''}" id="pill-paydate">
                 <span class="pill__text">${d.payDate ? formatDateMedium(d.payDate) : '날짜 선택'}</span>
                 <input type="date" id="f-paydate" value="${esc(d.payDate || '')}" aria-label="페이 지급일">

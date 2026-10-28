@@ -64,7 +64,7 @@ function dateCol(ymd, today) {
 }
 
 function payRow(e, today, { mode }) {
-  const paid = mode === 'paid';
+  const paid = mode === 'paid' || mode === 'old';
   const shownDate = paid ? e.paidAt : mode === 'unpaid' || mode === 'upcoming' ? e.payDate || e.date : e.date;
   const meta = [
     e.contactName ? `<span class="pay-row__who">${esc(e.contactName)}</span>` : '<span class="muted">실장 미정</span>',
