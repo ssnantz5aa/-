@@ -12,6 +12,9 @@ export function render(root) {
   let { q, scope } = saved;
 
   root.innerHTML = `
+    <header class="topbar">
+      <button type="button" class="topbar__back" id="search-back">${icon('chevronLeft')}<span>뒤로</span></button>
+    </header>
     <header class="page-head page-head--tight">
       <h1 class="title">검색</h1>
     </header>
@@ -27,6 +30,7 @@ export function render(root) {
     </div>
     <div id="results" class="results" aria-live="polite"></div>`;
 
+  $('#search-back', root).addEventListener('click', () => (history.length > 1 ? history.back() : (location.hash = '#/home')));
   const input = $('#q', root);
   const results = $('#results', root);
 

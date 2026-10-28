@@ -1,7 +1,7 @@
 import { store, session } from '../store.js';
 import { esc, $, toast, confirmSheet, go } from '../ui.js';
 import { icon } from '../icons.js';
-import { formatDateLong, formatTime, formatTimeRange, relativeLabel, todayYmd } from '../dates.js';
+import { formatDateLong, formatDateMedium, formatTime, formatTimeRange, relativeLabel, todayYmd } from '../dates.js';
 import { formatWon, formatWonShort } from '../parser.js';
 import { emptyState } from '../components.js';
 import { googleCalendarUrl, openInDeviceCalendar } from '../ics.js';
@@ -15,7 +15,8 @@ const row = (iconName, label, body) => `
     </div>
   </div>`;
 
-export function render(root, { id }) {
+export function render(root, { id, query } = {}) {
+  const fromPay = query?.get('from') === 'pay';
   const e = store.get(id);
   if (!e) {
     root.innerHTML = `
@@ -31,7 +32,7 @@ export function render(root, { id }) {
 
   root.innerHTML = `
     <header class="topbar">
-      <a class="topbar__back" href="#/calendar?date=${esc(e.date || '')}">${icon('chevronLeft')}<span>캘린더</span></a>
+      <a class="topbar__back" href="${fromPay ? '#/pay' : `#/calendar?date=${esc(e.date || '')}`}">${icon('chevronLeft')}<span>${fromPay ? '페이' : '캘린더'}</span></a>
       <span class="topbar__spacer"></span>
       <a class="btn btn--text" href="#/event/${esc(e.id)}/edit">${icon('edit', { size: 18 })}<span>수정</span></a>
     </header>
@@ -56,10 +57,21 @@ export function render(root, { id }) {
         }
         ${e.agency ? row('building', '에이전시', `<p class="info-row__value">${esc(e.agency)}</p>`) : ''}
         ${
-          e.pay != null || e.payNote
+          e.pay != null || e.payNote || e.tax || e.payDate
             ? row('won', '페이', `
-                ${e.pay != null ? `<p class="info-row__value amount num">${formatWon(e.pay)}<span class="amount__short">${formatWonShort(e.pay) !== formatWon(e.pay) ? formatWonShort(e.pay) : ''}</span></p>` : ''}
-                ${e.payNote ? `<p class="info-row__sub">${esc(e.payNote)}</p>` : ''}`)
+                ${e.pay != null ? `<p class="info-row__value amount num">${formatWon(e.pay)}<span class="amount__short">${formatWonShort(e.pay) !== formatWon(e.pay) ? formatWonShort(e.pay) : ''}</span></p>` : '<p class="info-row__value muted">금액 미정</p>'}
+                <dl class="pay-facts">
+                  <div><dt>세금공제</dt><dd>${e.tax ? esc(e.tax) : '<span class="muted">—</span>'}</dd></div>
+                  <div><dt>지급일</dt><dd>${e.payDate ? `<span class="num">${formatDateMedium(e.payDate)}</span>` : '<span class="muted">미정</span>'}</dd></div>
+                  ${e.payNote ? `<div><dt>조건</dt><dd>${esc(e.payNote)}</dd></div>` : ''}
+                </dl>
+                ${
+                  e.pay != null
+                    ? `<button type="button" class="paid-toggle ${e.paid ? 'is-paid' : ''}" id="paid-toggle" aria-pressed="${!!e.paid}">
+                        ${icon('check', { size: 16 })}<span>${e.paid ? `입금 완료 <span class="num">${e.paidAt ? formatDateMedium(e.paidAt) : ''}</span>` : '입금 확인하기'}</span>
+                      </button>`
+                    : ''
+                }`)
             : ''
         }
         ${e.notes ? row('note', '특이사항', `<p class="info-row__value pre">${esc(e.notes)}</p>`) : ''}
@@ -100,8 +112,27 @@ export function render(root, { id }) {
     openInDeviceCalendar(e);
   });
 
+  $('#paid-toggle', root)?.addEventListener('click', () => {
+    try {
+      store.setPaid(e.id, !e.paid);
+    } catch (err) {
+      toast(err.message, { kind: 'error' });
+      return;
+    }
+    const prev = { paid: e.paid, paidAt: e.paidAt };
+    toast(e.paid ? '미입금으로 되돌렸어요' : '입금 완료로 표시했어요', {
+      kind: 'success',
+      action: '실행 취소',
+      onAction: () => {
+        store.update(e.id, prev);
+        render(root, { id, query });
+      },
+    });
+    render(root, { id, query });
+  });
+
   $('#duplicate', root).addEventListener('click', () => {
-    const { id: _id, createdAt, updatedAt, ...rest } = e;
+    const { id: _id, createdAt, updatedAt, paid, paidAt, ...rest } = e;
     session.set('draft', { ...rest, uncertain: {}, source: 'manual' });
     go('#/review');
   });

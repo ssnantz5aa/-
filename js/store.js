@@ -34,19 +34,23 @@ function persist() {
   listeners.forEach((fn) => fn());
 }
 
+const toLocalYmd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`);
 
-const EVENT_FIELDS = ['title', 'type', 'date', 'startTime', 'endTime', 'callTime', 'location', 'contactName', 'phone', 'agency', 'pay', 'payNote', 'notes', 'memo', 'raw'];
+const EVENT_FIELDS = ['title', 'type', 'date', 'startTime', 'endTime', 'callTime', 'location', 'contactName', 'phone', 'agency', 'pay', 'payNote', 'tax', 'payDate', 'paid', 'paidAt', 'notes', 'memo', 'raw'];
 
 function sanitize(input) {
   const e = {};
   for (const k of EVENT_FIELDS) {
     const v = input[k];
     if (k === 'pay') e.pay = v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v);
-    else if (['date', 'startTime', 'endTime', 'callTime'].includes(k)) e[k] = v || null;
+    else if (k === 'paid') e.paid = v === true;
+    else if (['date', 'startTime', 'endTime', 'callTime', 'payDate', 'paidAt'].includes(k)) e[k] = v || null;
     else e[k] = typeof v === 'string' ? v.trim() : v ?? '';
   }
   e.type ||= 'etc';
+  if (!e.paid) e.paidAt = null;
   e.title ||= '제목 없는 일정';
   return e;
 }
@@ -114,6 +118,10 @@ export const store = {
       state.events = prev;
       throw err;
     }
+  },
+  /** 입금 완료 표시. 완료로 바꾸면 입금 확인 날짜를 오늘로 남긴다. */
+  setPaid(id, paid, paidAt = toLocalYmd(new Date())) {
+    return this.update(id, { paid: !!paid, paidAt: paid ? paidAt : null });
   },
   restore(event) {
     state.events = [...state.events.filter((e) => e.id !== event.id), event];

@@ -29,7 +29,10 @@ export function render(root) {
 
   root.innerHTML = `
     <header class="home-head">
-      <p class="eyebrow">${greeting(now.getHours())}</p>
+      <div class="home-head__top">
+        <p class="eyebrow">${greeting(now.getHours())}</p>
+        <a class="icon-btn home-head__search" href="#/search" aria-label="일정 검색">${icon('search')}</a>
+      </div>
       <h1 class="display">${now.getMonth() + 1}월 ${now.getDate()}일 <span class="display__sub">${WEEKDAYS[now.getDay()]}요일</span></h1>
       <p class="home-head__summary">${summary}</p>
     </header>

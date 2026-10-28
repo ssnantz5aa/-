@@ -24,6 +24,31 @@ function fold(line) {
   return out.join('\r\n');
 }
 
+/** 직접 입력한 일정의 메모 칸 내용: 항목 요약 */
+function summary(e) {
+  const pay = e.pay != null && [formatWon(e.pay), e.tax, e.payNote].filter(Boolean).join(' · ');
+  return [
+    e.callTime && `집합: ${e.callTime}`,
+    (e.contactName || e.phone) && `연락처: ${[e.contactName, e.phone].filter(Boolean).join(' ')}`,
+    e.agency && `에이전시: ${e.agency}`,
+    pay && `페이: ${pay}`,
+    !pay && e.tax && `세금공제: ${e.tax}`,
+    e.payDate && `지급일: ${e.payDate}`,
+    e.notes && `\n${e.notes}`,
+  ].filter(Boolean).join('\n');
+}
+
+/**
+ * 캘린더 메모 칸(DESCRIPTION). 붙여넣은 원문이 있으면 손대지 않고 그대로 넣고,
+ * 직접 쓴 메모가 있으면 원문 위에 먼저 넣은 뒤 빈 줄로 구분한다.
+ */
+export function description(e) {
+  const raw = String(e.raw ?? '').replace(/\r\n?/g, '\n');
+  const body = raw.trim() ? raw : summary(e);
+  const memo = String(e.memo ?? '').trim();
+  return [memo, body].filter(Boolean).join('\n\n');
+}
+
 const stamp = (ymd, hhmm) => `${ymd.replace(/-/g, '')}T${hhmm.replace(':', '')}00`;
 
 function vevent(e) {
@@ -43,15 +68,7 @@ function vevent(e) {
   }
   lines.push(`SUMMARY:${esc(e.title)}`);
   if (e.location) lines.push(`LOCATION:${esc(e.location.replace(/\n/g, ', '))}`);
-  const desc = [
-    e.callTime && `집합: ${e.callTime}`,
-    (e.contactName || e.phone) && `연락처: ${[e.contactName, e.phone].filter(Boolean).join(' ')}`,
-    e.agency && `에이전시: ${e.agency}`,
-    e.pay != null && `페이: ${formatWon(e.pay)}${e.payNote ? ` (${e.payNote})` : ''}`,
-    e.notes && `\n${e.notes}`,
-    e.memo && `\n메모: ${e.memo}`,
-  ].filter(Boolean);
-  lines.push(`DESCRIPTION:${esc(desc.join('\n'))}`, 'END:VEVENT');
+  lines.push(`DESCRIPTION:${esc(description(e))}`, 'END:VEVENT');
   return lines.map(fold).join('\r\n');
 }
 
@@ -75,14 +92,7 @@ export function googleCalendarUrl(e) {
   } else {
     dates = `${day}/${toYmd(addDays(fromYmd(e.date), 1)).replace(/-/g, '')}`;
   }
-  const details = [
-    e.callTime && `집합: ${e.callTime}`,
-    (e.contactName || e.phone) && `연락처: ${[e.contactName, e.phone].filter(Boolean).join(' ')}`,
-    e.agency && `에이전시: ${e.agency}`,
-    e.pay != null && `페이: ${formatWon(e.pay)}${e.payNote ? ` (${e.payNote})` : ''}`,
-    e.notes,
-    e.memo && `메모: ${e.memo}`,
-  ].filter(Boolean).join('\n');
+  const details = description(e);
   const params = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates, ctz: 'Asia/Seoul' });
   if (details) params.set('details', details);
   if (e.location) params.set('location', e.location.replace(/\n/g, ', '));

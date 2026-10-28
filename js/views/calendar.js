@@ -33,6 +33,7 @@ export function render(root, { query }) {
           <span class="num">${sel.getFullYear()}</span>년 <span class="num">${sel.getMonth() + 1}</span>월
         </h1>
         <div class="cal-head__nav">
+          <a class="icon-btn" href="#/search" aria-label="일정 검색">${icon('search')}</a>
           <button type="button" class="btn btn--secondary btn--sm" data-nav="today" ${state.selected === today ? 'disabled' : ''}>오늘</button>
           <button type="button" class="icon-btn" data-nav="-1" aria-label="이전">${icon('chevronLeft')}</button>
           <button type="button" class="icon-btn" data-nav="1" aria-label="다음">${icon('chevronRight')}</button>

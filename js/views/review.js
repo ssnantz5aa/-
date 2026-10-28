@@ -16,9 +16,13 @@ const OPTIONAL = [
   { key: 'callTime', label: '집합 시간', icon: 'flag' },
 ];
 
+// 에이전시와 페이(세금공제·지급일 포함)는 값이 없어도 항상 보여 준다.
+const ALWAYS = new Set(['agency', 'pay']);
+const TAX_PRESETS = ['3.3% 공제', '8.8% 공제', '공제 없음'];
+
 const hasValue = (d, key) => {
   if (key === 'contact') return !!(d.contactName || d.phone);
-  if (key === 'pay') return d.pay != null || !!d.payNote;
+  if (key === 'pay') return d.pay != null || !!d.payNote || !!d.tax || !!d.payDate;
   return d[key] != null && d[key] !== '';
 };
 
@@ -47,7 +51,7 @@ export function render(root, { id } = {}) {
   const d = { uncertain: {}, ...structuredClone(source) };
   if (editing) d.uncertain = {};
   const parsed = d.source === 'parsed';
-  const visible = new Set(OPTIONAL.filter((f) => hasValue(d, f.key) || d.uncertain[f.key === 'contact' ? 'phone' : f.key]).map((f) => f.key));
+  const visible = new Set(OPTIONAL.filter((f) => ALWAYS.has(f.key) || hasValue(d, f.key) || d.uncertain[f.key === 'contact' ? 'phone' : f.key]).map((f) => f.key));
   const fmt = store.settings().timeFormat;
   const found = countFields(d);
   const unsure = Object.keys(d.uncertain).length;
@@ -130,7 +134,25 @@ export function render(root, { id } = {}) {
             <span class="money__mirror num" id="pay-mirror" aria-hidden="true"></span>
             <span class="money__short num" id="pay-short">${d.pay ? formatWonShort(d.pay) : ''}</span>
           </div>
-          <input class="field__input field__input--sub" id="f-payNote" placeholder="지급 조건 (예: 3.3% 공제, 당일 정산)" value="${esc(d.payNote)}" data-key="payNote" autocomplete="off">`, d.uncertain.pay)}
+          <div class="pay-meta">
+            <div class="pay-meta__row">
+              <span class="pay-meta__label">세금공제</span>
+              <input class="field__input pay-meta__input" id="f-tax" placeholder="없으면 비워 두세요" value="${esc(d.tax || '')}" data-key="tax" autocomplete="off">
+            </div>
+            <div class="tax-presets" role="group" aria-label="세금공제 빠른 선택">
+              ${TAX_PRESETS.map((t) => `<button type="button" class="tax-chip" data-tax="${t}" aria-pressed="${d.tax === t}">${t}</button>`).join('')}
+            </div>
+            <div class="pay-meta__row">
+              <span class="pay-meta__label">지급일</span>
+              <label class="pill ${d.payDate ? '' : 'is-empty'} ${d.uncertain.payDate ? 'is-warn' : ''}" id="pill-paydate">
+                <span class="pill__text">${d.payDate ? formatDateMedium(d.payDate) : '날짜 선택'}</span>
+                <input type="date" id="f-paydate" value="${esc(d.payDate || '')}" aria-label="페이 지급일">
+              </label>
+              <button type="button" class="icon-btn icon-btn--sm" id="clear-paydate" aria-label="지급일 지우기" ${d.payDate ? '' : 'hidden'}>${icon('x', { size: 16 })}</button>
+            </div>
+            <div data-hint="payDate">${hint(d.uncertain.payDate)}</div>
+          </div>
+          <input class="field__input field__input--sub" id="f-payNote" placeholder="기타 지급 조건" value="${esc(d.payNote)}" data-key="payNote" autocomplete="off">`, d.uncertain.pay)}
         ${fieldBlock('notes', `<textarea class="field__input" id="f-notes" rows="2" placeholder="준비물, 의상, 주의사항 등" data-key="notes">${esc(d.notes)}</textarea>`)}
       </div>
 
@@ -187,7 +209,7 @@ export function render(root, { id } = {}) {
     if (h) h.innerHTML = '';
     const field = h?.closest('.field');
     field?.querySelector('.warn-dot')?.remove();
-    ({ date: $('#pill-date', root), startTime: $('#pill-start', root) })[key]?.classList.remove('is-warn');
+    ({ date: $('#pill-date', root), startTime: $('#pill-start', root), payDate: $('#pill-paydate', root) })[key]?.classList.remove('is-warn');
   };
 
   const title = $('#f-title', root);
@@ -217,6 +239,7 @@ export function render(root, { id } = {}) {
       clearWarn(key);
       if (key === 'date') root.querySelector('[data-hint="date"]').innerHTML = '';
       $('#clear-time', root).hidden = !(d.startTime || d.endTime);
+      $('#clear-paydate', root).hidden = !d.payDate;
       persistDraft();
     });
     return input;
@@ -225,6 +248,21 @@ export function render(root, { id } = {}) {
   const start = bindPill('#f-start', '#pill-start', 'startTime', (v) => formatTime(v, fmt), '시작 시간');
   const end = bindPill('#f-end', '#pill-end', 'endTime', (v) => formatTime(v, fmt), '종료 시간');
   const call = bindPill('#f-call', '#pill-call', 'callTime', (v) => formatTime(v, fmt), '시간 선택');
+  const payDate = bindPill('#f-paydate', '#pill-paydate', 'payDate', (v) => formatDateMedium(v), '날짜 선택');
+  $('#clear-paydate', root).addEventListener('click', () => {
+    payDate.value = '';
+    payDate.dispatchEvent(new Event('change'));
+  });
+
+  const taxInput = $('#f-tax', root);
+  const syncTaxChips = () => $$('[data-tax]', root).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tax === taxInput.value)));
+  taxInput.addEventListener('input', syncTaxChips);
+  $$('[data-tax]', root).forEach((b) =>
+    b.addEventListener('click', () => {
+      taxInput.value = taxInput.value === b.dataset.tax ? '' : b.dataset.tax;
+      taxInput.dispatchEvent(new Event('input'));
+    }),
+  );
 
   $('#clear-time', root).addEventListener('click', () => {
     for (const inp of [start, end]) {
@@ -297,7 +335,11 @@ export function render(root, { id } = {}) {
         el.value = '';
       });
       if (key === 'contact') Object.assign(d, { contactName: '', phone: '' });
-      else if (key === 'pay') Object.assign(d, { pay: null, payNote: '' });
+      else if (key === 'pay') {
+        Object.assign(d, { pay: null, payNote: '', tax: '', payDate: null });
+        payDate.dispatchEvent(new Event('change'));
+        syncTaxChips();
+      }
       else d[key] = key === 'callTime' ? null : '';
       clearWarn(key === 'contact' ? 'phone' : key);
       if (key === 'callTime') {
@@ -307,6 +349,10 @@ export function render(root, { id } = {}) {
       if (key === 'pay') {
         $('#pay-short', root).textContent = '';
         fitPay();
+      }
+      if (ALWAYS.has(key)) {
+        persistDraft();
+        return;
       }
       field.hidden = true;
       visible.delete(key);

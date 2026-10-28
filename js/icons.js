@@ -4,6 +4,7 @@ const P = {
   calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
+  wallet: '<path d="M17.5 7.5V5.8a1 1 0 0 0-1.2-1L5.2 6.9A1.5 1.5 0 0 0 4 8.4V18a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 18V9a1.5 1.5 0 0 0-1.5-1.5H5.5"/><path d="M16 13.5h1"/>',
   settings: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   clipboard: '<rect x="6" y="4.5" width="12" height="16" rx="2"/><path d="M9.5 4.5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M9 10h6M9 13.5h6M9 17h3.5"/>',
   arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>',
