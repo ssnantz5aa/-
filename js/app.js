@@ -8,12 +8,13 @@ import * as detail from './views/detail.js';
 import * as calendar from './views/calendar.js';
 import * as search from './views/search.js';
 import * as settings from './views/settings.js';
+import * as pay from './views/pay.js';
 
 const TABS = [
   { id: 'home', label: '홈', icon: 'home', href: '#/home' },
   { id: 'calendar', label: '캘린더', icon: 'calendar', href: '#/calendar' },
   { id: 'add', label: '일정 추가', icon: 'plus', href: '#/add', primary: true },
-  { id: 'search', label: '검색', icon: 'search', href: '#/search' },
+  { id: 'pay', label: '페이', icon: 'wallet', href: '#/pay' },
   { id: 'settings', label: '설정', icon: 'settings', href: '#/settings' },
 ];
 
@@ -26,10 +27,11 @@ function match(hash) {
   if (a === 'add') return { view: compose, tab: 'add', query };
   if (a === 'review') return { view: review, tab: 'add', query, flow: true };
   if (a === 'calendar') return { view: calendar, tab: 'calendar', query };
-  if (a === 'search') return { view: search, tab: 'search', query };
+  if (a === 'search') return { view: search, tab: 'calendar', query };
+  if (a === 'pay') return { view: pay, tab: 'pay', query };
   if (a === 'settings') return { view: settings, tab: 'settings', query };
   if (a === 'event' && b && c === 'edit') return { view: review, tab: 'calendar', query, params: { id: b }, flow: true };
-  if (a === 'event' && b) return { view: detail, tab: 'calendar', query, params: { id: b } };
+  if (a === 'event' && b) return { view: detail, tab: query.get('from') === 'pay' ? 'pay' : 'calendar', query, params: { id: b } };
   return { view: home, tab: 'home', query };
 }
 

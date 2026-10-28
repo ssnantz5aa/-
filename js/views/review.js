@@ -1,10 +1,10 @@
 import { store, session } from '../store.js';
 import { esc, $, $$, autoGrow, toast, confirmSheet, go } from '../ui.js';
 import { icon } from '../icons.js';
-import { TYPES } from '../types.js';
 import { formatDateMedium, formatTime } from '../dates.js';
 import { formatPhone, formatWonShort, countFields } from '../parser.js';
 import { emptyState } from '../components.js';
+import { openInDeviceCalendar } from '../ics.js';
 
 // 선택 입력 항목. 값이 없으면 숨기고 '추가' 칩으로만 보여 준다.
 const OPTIONAL = [
@@ -16,9 +16,13 @@ const OPTIONAL = [
   { key: 'callTime', label: '집합 시간', icon: 'flag' },
 ];
 
+// 에이전시와 페이(세금공제·지급일 포함)는 값이 없어도 항상 보여 준다.
+const ALWAYS = new Set(['agency', 'pay']);
+const TAX_PRESETS = ['3.3% 공제', '8.8% 공제', '공제 없음'];
+
 const hasValue = (d, key) => {
   if (key === 'contact') return !!(d.contactName || d.phone);
-  if (key === 'pay') return d.pay != null || !!d.payNote;
+  if (key === 'pay') return d.pay != null || !!d.payNote || !!d.tax || !!d.payDate;
   return d[key] != null && d[key] !== '';
 };
 
@@ -47,7 +51,7 @@ export function render(root, { id } = {}) {
   const d = { uncertain: {}, ...structuredClone(source) };
   if (editing) d.uncertain = {};
   const parsed = d.source === 'parsed';
-  const visible = new Set(OPTIONAL.filter((f) => hasValue(d, f.key) || d.uncertain[f.key === 'contact' ? 'phone' : f.key]).map((f) => f.key));
+  const visible = new Set(OPTIONAL.filter((f) => ALWAYS.has(f.key) || hasValue(d, f.key) || d.uncertain[f.key === 'contact' ? 'phone' : f.key]).map((f) => f.key));
   const fmt = store.settings().timeFormat;
   const found = countFields(d);
   const unsure = Object.keys(d.uncertain).length;
@@ -80,12 +84,6 @@ export function render(root, { id } = {}) {
     ${sparse ? `<div class="banner banner--warn">${icon('info', { size: 18 })}<div><strong>일정 정보를 충분히 찾지 못했어요</strong><p>날짜와 시간을 직접 선택하고 필요한 항목을 추가해 주세요.</p></div></div>` : ''}
 
     <form class="editor" id="editor" novalidate>
-      <div class="type-picker" role="radiogroup" aria-label="일정 유형">
-        ${TYPES.map(
-          (t) => `<button type="button" role="radio" class="type-chip" data-type="${t.id}" aria-checked="${d.type === t.id}"><span class="type-dot" data-type="${t.id}"></span>${t.label}</button>`,
-        ).join('')}
-      </div>
-
       <div class="editor__title">
         <textarea id="f-title" class="title-input" rows="1" placeholder="일정 제목" aria-label="일정 제목" maxlength="120">${esc(d.title)}</textarea>
         <div data-hint="title">${hint(d.uncertain.title)}</div>
@@ -136,8 +134,35 @@ export function render(root, { id } = {}) {
             <span class="money__mirror num" id="pay-mirror" aria-hidden="true"></span>
             <span class="money__short num" id="pay-short">${d.pay ? formatWonShort(d.pay) : ''}</span>
           </div>
-          <input class="field__input field__input--sub" id="f-payNote" placeholder="지급 조건 (예: 3.3% 공제, 당일 정산)" value="${esc(d.payNote)}" data-key="payNote" autocomplete="off">`, d.uncertain.pay)}
+          <div class="pay-meta">
+            <div class="pay-meta__row">
+              <label class="pay-meta__label" for="f-tax">세금공제</label>
+              <input class="field__input pay-meta__input" id="f-tax" placeholder="없으면 비워 두세요" value="${esc(d.tax || '')}" data-key="tax" autocomplete="off">
+            </div>
+            <div class="tax-presets" role="group" aria-label="세금공제 빠른 선택">
+              ${TAX_PRESETS.map((t) => `<button type="button" class="tax-chip" data-tax="${t}" aria-pressed="${d.tax === t}">${t}</button>`).join('')}
+            </div>
+            <div class="pay-meta__row">
+              <label class="pay-meta__label" for="f-paydate">지급일</label>
+              <label class="pill ${d.payDate ? '' : 'is-empty'} ${d.uncertain.payDate ? 'is-warn' : ''}" id="pill-paydate">
+                <span class="pill__text">${d.payDate ? formatDateMedium(d.payDate) : '날짜 선택'}</span>
+                <input type="date" id="f-paydate" value="${esc(d.payDate || '')}" aria-label="페이 지급일">
+              </label>
+              <button type="button" class="icon-btn icon-btn--sm" id="clear-paydate" aria-label="지급일 지우기" ${d.payDate ? '' : 'hidden'}>${icon('x', { size: 16 })}</button>
+            </div>
+            <div data-hint="payDate">${hint(d.uncertain.payDate)}</div>
+          </div>
+          <input class="field__input field__input--sub" id="f-payNote" placeholder="기타 지급 조건" value="${esc(d.payNote)}" data-key="payNote" autocomplete="off">`, d.uncertain.pay)}
         ${fieldBlock('notes', `<textarea class="field__input" id="f-notes" rows="2" placeholder="준비물, 의상, 주의사항 등" data-key="notes">${esc(d.notes)}</textarea>`)}
+      </div>
+
+      <div class="field field--memo">
+        <span class="field__icon">${icon('edit')}</span>
+        <div class="field__main">
+          <label class="field__label" for="f-memo">메모</label>
+          <textarea class="field__input" id="f-memo" rows="2" placeholder="직접 남길 메모를 적어 주세요" data-key="memo">${esc(d.memo || '')}</textarea>
+        </div>
+        <span></span>
       </div>
 
       <div class="add-fields" id="add-fields">
@@ -159,7 +184,7 @@ export function render(root, { id } = {}) {
     ${editing ? `<button type="button" class="btn btn--text btn--danger-text delete-link" id="delete">${icon('trash', { size: 18 })}<span>일정 삭제</span></button>` : ''}
 
     <div class="action-bar">
-      <button type="button" class="btn btn--primary btn--lg btn--grow" id="save">${icon('calendar', { size: 18 })}<span>${editing ? '변경사항 저장' : '캘린더에 등록'}</span></button>
+      <button type="button" class="btn btn--primary btn--lg btn--grow" id="save">${icon('calendar', { size: 18 })}<span>${editing ? '변경사항 저장' : '아이폰 캘린더에 추가'}</span></button>
     </div>`;
 
   function fieldBlock(key, inner, warn) {
@@ -184,7 +209,7 @@ export function render(root, { id } = {}) {
     if (h) h.innerHTML = '';
     const field = h?.closest('.field');
     field?.querySelector('.warn-dot')?.remove();
-    ({ date: $('#pill-date', root), startTime: $('#pill-start', root) })[key]?.classList.remove('is-warn');
+    ({ date: $('#pill-date', root), startTime: $('#pill-start', root), payDate: $('#pill-paydate', root) })[key]?.classList.remove('is-warn');
   };
 
   const title = $('#f-title', root);
@@ -195,13 +220,6 @@ export function render(root, { id } = {}) {
     persistDraft();
   });
 
-  $$('.type-chip', root).forEach((chip) =>
-    chip.addEventListener('click', () => {
-      d.type = chip.dataset.type;
-      $$('.type-chip', root).forEach((c) => c.setAttribute('aria-checked', String(c === chip)));
-      persistDraft();
-    }),
-  );
 
   // 날짜·시간 알약: 투명한 기본 입력을 덮어 아이폰 기본 선택기를 그대로 사용한다.
   const bindPill = (inputId, pillId, key, format, placeholder) => {
@@ -221,6 +239,7 @@ export function render(root, { id } = {}) {
       clearWarn(key);
       if (key === 'date') root.querySelector('[data-hint="date"]').innerHTML = '';
       $('#clear-time', root).hidden = !(d.startTime || d.endTime);
+      $('#clear-paydate', root).hidden = !d.payDate;
       persistDraft();
     });
     return input;
@@ -229,6 +248,21 @@ export function render(root, { id } = {}) {
   const start = bindPill('#f-start', '#pill-start', 'startTime', (v) => formatTime(v, fmt), '시작 시간');
   const end = bindPill('#f-end', '#pill-end', 'endTime', (v) => formatTime(v, fmt), '종료 시간');
   const call = bindPill('#f-call', '#pill-call', 'callTime', (v) => formatTime(v, fmt), '시간 선택');
+  const payDate = bindPill('#f-paydate', '#pill-paydate', 'payDate', (v) => formatDateMedium(v), '날짜 선택');
+  $('#clear-paydate', root).addEventListener('click', () => {
+    payDate.value = '';
+    payDate.dispatchEvent(new Event('change'));
+  });
+
+  const taxInput = $('#f-tax', root);
+  const syncTaxChips = () => $$('[data-tax]', root).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tax === taxInput.value)));
+  taxInput.addEventListener('input', syncTaxChips);
+  $$('[data-tax]', root).forEach((b) =>
+    b.addEventListener('click', () => {
+      taxInput.value = taxInput.value === b.dataset.tax ? '' : b.dataset.tax;
+      taxInput.dispatchEvent(new Event('input'));
+    }),
+  );
 
   $('#clear-time', root).addEventListener('click', () => {
     for (const inp of [start, end]) {
@@ -301,7 +335,11 @@ export function render(root, { id } = {}) {
         el.value = '';
       });
       if (key === 'contact') Object.assign(d, { contactName: '', phone: '' });
-      else if (key === 'pay') Object.assign(d, { pay: null, payNote: '' });
+      else if (key === 'pay') {
+        Object.assign(d, { pay: null, payNote: '', tax: '', payDate: null });
+        payDate.dispatchEvent(new Event('change'));
+        syncTaxChips();
+      }
       else d[key] = key === 'callTime' ? null : '';
       clearWarn(key === 'contact' ? 'phone' : key);
       if (key === 'callTime') {
@@ -311,6 +349,10 @@ export function render(root, { id } = {}) {
       if (key === 'pay') {
         $('#pay-short', root).textContent = '';
         fitPay();
+      }
+      if (ALWAYS.has(key)) {
+        persistDraft();
+        return;
       }
       field.hidden = true;
       visible.delete(key);
@@ -330,7 +372,7 @@ export function render(root, { id } = {}) {
       pill.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    if (!d.title.trim()) d.title = `${TYPES.find((t) => t.id === d.type)?.label ?? ''} 일정`.trim();
+    if (!d.title.trim()) d.title = '새 일정';
 
     let saved;
     try {
@@ -341,16 +383,19 @@ export function render(root, { id } = {}) {
     }
     saveBtn.disabled = true;
     saveBtn.classList.add('is-done');
-    saveBtn.innerHTML = `${icon('check', { size: 18 })}<span>${editing ? '저장됨' : '등록 완료'}</span>`;
-    if (!editing) {
-      session.set('draft', null);
-      session.set('compose', null);
+    saveBtn.innerHTML = `${icon('check', { size: 18 })}<span>${editing ? '저장됨' : '추가 화면 여는 중'}</span>`;
+    if (editing) {
+      setTimeout(() => {
+        toast('변경사항을 저장했어요', { kind: 'success' });
+        go(`#/event/${saved.id}`);
+      }, 380);
+      return;
     }
-    setTimeout(() => {
-      toast(editing ? '변경사항을 저장했어요' : '캘린더에 등록했어요', { kind: 'success' });
-      if (editing) go(`#/event/${saved.id}`);
-      else go(`#/calendar?date=${saved.date}&focus=${saved.id}`);
-    }, 380);
+    session.set('draft', null);
+    session.set('compose', null);
+    // 상세 화면으로 먼저 옮긴 뒤 아이폰 캘린더의 일정 추가 화면을 연다.
+    go(`#/event/${saved.id}`);
+    setTimeout(() => openInDeviceCalendar(saved), 250);
   });
 
   $('#delete', root)?.addEventListener('click', async () => {

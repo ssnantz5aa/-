@@ -1,18 +1,20 @@
 import { store, session, sortEvents } from '../store.js';
 import { esc, $, $$ } from '../ui.js';
 import { icon } from '../icons.js';
-import { TYPES } from '../types.js';
 import { eventRowDated, emptyState } from '../components.js';
 import { todayYmd } from '../dates.js';
 
-const FIELDS = ['title', 'location', 'contactName', 'phone', 'agency', 'notes', 'payNote', 'raw'];
+const FIELDS = ['title', 'location', 'contactName', 'phone', 'agency', 'notes', 'memo', 'payNote', 'raw'];
 const norm = (s) => String(s ?? '').toLowerCase().replace(/\s+/g, '');
 
 export function render(root) {
   const saved = session.get('search') || { q: '', type: 'all', scope: 'upcoming' };
-  let { q, type, scope } = saved;
+  let { q, scope } = saved;
 
   root.innerHTML = `
+    <header class="topbar">
+      <button type="button" class="topbar__back" id="search-back">${icon('chevronLeft')}<span>뒤로</span></button>
+    </header>
     <header class="page-head page-head--tight">
       <h1 class="title">검색</h1>
     </header>
@@ -21,10 +23,6 @@ export function render(root) {
       <input type="search" id="q" class="search-box__input" placeholder="제목, 장소, 담당자, 에이전시" value="${esc(q)}" autocomplete="off" enterkeyhint="search" aria-label="일정 검색">
       <button type="button" class="icon-btn icon-btn--sm" id="q-clear" aria-label="검색어 지우기" ${q ? '' : 'hidden'}>${icon('x', { size: 16 })}</button>
     </div>
-    <div class="filters" role="group" aria-label="유형 필터">
-      <button type="button" class="filter" data-type="all" aria-pressed="${type === 'all'}">전체</button>
-      ${TYPES.map((t) => `<button type="button" class="filter" data-type="${t.id}" aria-pressed="${type === t.id}"><span class="type-dot" data-type="${t.id}"></span>${t.label}</button>`).join('')}
-    </div>
     <div class="scope" role="group" aria-label="기간">
       <button type="button" class="scope__btn" data-scope="upcoming" aria-pressed="${scope === 'upcoming'}">예정</button>
       <button type="button" class="scope__btn" data-scope="past" aria-pressed="${scope === 'past'}">지난 일정</button>
@@ -32,15 +30,15 @@ export function render(root) {
     </div>
     <div id="results" class="results" aria-live="polite"></div>`;
 
+  $('#search-back', root).addEventListener('click', () => (history.length > 1 ? history.back() : (location.hash = '#/home')));
   const input = $('#q', root);
   const results = $('#results', root);
 
   const draw = () => {
-    session.set('search', { q, type, scope });
+    session.set('search', { q, scope });
     const today = todayYmd();
     const terms = q.trim().split(/\s+/).filter(Boolean).map(norm);
     let list = store.all().filter((e) => {
-      if (type !== 'all' && e.type !== type) return false;
       if (scope === 'upcoming' && (e.date || '') < today) return false;
       if (scope === 'past' && (e.date || '') >= today) return false;
       if (!terms.length) return true;
@@ -58,7 +56,7 @@ export function render(root) {
       results.innerHTML = emptyState({
         iconName: 'search',
         title: q ? `‘${q}’에 맞는 일정이 없어요` : '조건에 맞는 일정이 없어요',
-        body: scope !== 'all' ? '기간을 ‘전체 기간’으로 바꿔 보세요.' : '다른 검색어나 유형으로 찾아보세요.',
+        body: scope !== 'all' ? '기간을 ‘전체 기간’으로 바꿔 보세요.' : '다른 검색어로 찾아보세요.',
       });
       return;
     }
@@ -97,13 +95,6 @@ export function render(root) {
     draw();
     input.focus();
   });
-  $$('[data-type]', root).forEach((b) =>
-    b.addEventListener('click', () => {
-      type = b.dataset.type;
-      $$('.filter', root).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      draw();
-    }),
-  );
   $$('[data-scope]', root).forEach((b) =>
     b.addEventListener('click', () => {
       scope = b.dataset.scope;

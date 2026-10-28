@@ -29,6 +29,8 @@ const LABELS = {
   contact: ['현장담당', '현장 담당', '담당자', '담당', '연락처', '문의', '연락', '전화번호', '전화', '핸드폰', '휴대폰', '매니저', '실장'],
   agency: ['에이전시', '소속사', '소속', '업체명', '업체', '회사', '주최', '주관', '클라이언트', '광고주', '제작사', '기획사', '섭외처', '섭외'],
   pay: ['출연료', '페이', '금액', '비용', '일당', '시급', '급여', '보수', '단가', '사례비', '수당', '개런티', '정산', 'pay', 'Pay', 'PAY'],
+  payDate: ['지급일자', '입금예정일', '지급예정일', '지급일', '입금일', '정산일', '지급', '입금'],
+  tax: ['세금공제', '세금', '공제'],
   notes: ['특이사항', '참고사항', '전달사항', '요청사항', '주의사항', '유의사항', '준비물', '드레스코드', '의상', '헤어', '메이크업', '참고', '비고', '주의', '기타', '메모'],
   type: ['구분', '유형', '종류', '분류'],
 };
@@ -46,7 +48,7 @@ const LABEL_RE = new RegExp(
   `^(?:[\\[(<【「]\\s*(${LABEL_ALT})\\s*[\\])>】」]\\s*[:=\\-]?|(${LABEL_ALT})\\s*([:=]|\\s-\\s|\\s|$))\\s*(.*)$`,
 );
 // 일상 문장에도 자주 등장하는 라벨은 콜론이나 괄호가 있을 때만 라벨로 본다.
-const STRICT_LABELS = new Set(['현장', '연락', '전화', '주의', '기타', '내용', '시간', '일정', '도착', '집합', '소속', '회사', '업체', '타임', '참고', '위치', '기간', '언제', '섭외', '정산', '비용', '의상', '헤어']);
+const STRICT_LABELS = new Set(['현장', '연락', '전화', '주의', '기타', '내용', '시간', '일정', '도착', '집합', '소속', '회사', '업체', '타임', '참고', '위치', '기간', '언제', '섭외', '정산', '비용', '의상', '헤어', '지급', '입금', '세금', '공제']);
 // '일시: 10/24 장소: 성수'처럼 한 줄에 여러 라벨이 있으면 라벨마다 줄을 나눈다.
 const INLINE_LABEL_RE = new RegExp(`([\\s,/|])(${LABEL_ALT})\\s*:`, 'g');
 const POLITE = /부탁|주세요|바랍니다|드립니다|드려요|해요|합니다|예정/;
@@ -136,6 +138,123 @@ export function formatWonShort(n) {
   if (!rem) return `${man.toLocaleString('ko-KR')}만원`;
   if (rem % 1000 === 0) return `${man.toLocaleString('ko-KR')}만 ${rem / 1000}천원`;
   return formatWon(n);
+}
+
+// ── 세금공제 ────────────────────────────────────────────
+// 세금에 대한 말이 있을 때만 값을 만든다. 없으면 빈칸으로 둔다(추정하지 않음).
+const TAX_RULES = [
+  [/(?:세금\s*)?공제\s*(?:없음|없이|x|X|안\s*함|안\s*해요?)|무공제|세금\s*없음|공제\s*미적용/, () => '공제 없음'],
+  [/(\d{1,2}(?:\.\d)?)\s*%\s*(?:세금\s*)?(?:공제|원천징수|차감|제외|떼고|빼고)?(?:\s*후)?/, (m) => `${m[1]}% 공제`],
+  [/(3\.3|8\.8)\s*(?:세금\s*)?(?:공제|원천징수|차감|제외|떼고|빼고)(?:\s*후)?/, (m) => `${m[1]}% 공제`],
+  [/원천\s*징수/, () => '원천징수'],
+  [/세금\s*(?:공제|제외|차감)(?:\s*후)?/, () => '세금 공제'],
+  [/세후/, () => '세후'],
+  [/세전/, () => '세전'],
+  [/실\s*수령(?:액)?/, () => '실수령'],
+];
+
+export function extractTax(str) {
+  for (const [re, build] of TAX_RULES) {
+    const m = String(str).match(re);
+    if (!m) continue;
+    // '%'만 있는 경우는 3.3·8.8처럼 세율로 쓰이는 숫자일 때만 세금으로 본다.
+    if (re === TAX_RULES[1][0] && !/^(?:3\.3|8\.8|10|22)$/.test(m[1]) && !/공제|징수|차감|제외|떼고|빼고/.test(m[0])) continue;
+    return { tax: build(m), rest: str.replace(m[0], ' ') };
+  }
+  return { tax: '', rest: str };
+}
+
+// ── 페이 지급일 ─────────────────────────────────────────
+// 일정 날짜가 나중에 정해질 수 있으므로 규칙만 뽑아 두고 마지막에 날짜로 계산한다.
+const PAY_WORD = '(?:지급|입금|정산|결제|송금)';
+const KO_NUM = { 한: 1, 두: 2, 세: 3, 네: 4 };
+const PAY_DATE_RULES = [
+  [new RegExp(`(?:당일|현장)\\s*${PAY_WORD}|${PAY_WORD}\\s*당일`), () => ({ kind: 'same' })],
+  [new RegExp(`(?:익일|다음\\s*날)\\s*${PAY_WORD}?`), () => ({ kind: 'days', n: 1 })],
+  [new RegExp(`(익익월|다다음\\s*달|익월|다음\\s*달|차월)\\s*(?:(\\d{1,2})\\s*일|(말일?|마지막\\s*날))\\s*(?:에\\s*)?${PAY_WORD}?`), (m) => ({ kind: 'month', n: /익익|다다음/.test(m[1]) ? 2 : 1, day: m[2] ? +m[2] : 'end' })],
+  [new RegExp(`(?:당월|이번\\s*달|그\\s*달)?\\s*말일\\s*(?:에\\s*)?${PAY_WORD}?`), () => ({ kind: 'month', n: 0, day: 'end' })],
+  [new RegExp(`(\\d+|한|두|세|네)\\s*(주|일|달|개월)\\s*(?:후|뒤|이내|내|안에)\\s*(?:에\\s*)?${PAY_WORD}?`), (m) => {
+    const n = KO_NUM[m[1]] ?? +m[1];
+    return m[2] === '주' ? { kind: 'days', n: n * 7 } : m[2] === '일' ? { kind: 'days', n } : { kind: 'month', n, day: 'same' };
+  }],
+  [new RegExp(`(?:(\\d{4})\\s*[.\\-/년]\\s*)?(\\d{1,2})\\s*(?:월|[./])\\s*(\\d{1,2})\\s*일?\\s*(?:\\([월화수목금토일]\\)\\s*)?(?:에\\s*)?(${PAY_WORD})?`), (m) => ({ kind: 'abs', y: m[1] ? +m[1] : null, m: +m[2], d: +m[3], keyword: !!m[4] })],
+  [new RegExp(`(?:매월\\s*)?(\\d{1,2})\\s*일\\s*(?:에\\s*)?${PAY_WORD}`), (m) => ({ kind: 'dom', d: +m[1] })],
+];
+
+/**
+ * @param {string} str
+ * @param {{ loose?: boolean }} opt  loose: 지급일 라벨이 붙은 줄이라 '10월 31일'처럼 지급 단어가 없어도 날짜로 본다.
+ */
+export function extractPayDate(str, { loose = false } = {}) {
+  for (const [re, build] of PAY_DATE_RULES) {
+    const m = String(str).match(re);
+    if (!m) continue;
+    const rule = build(m);
+    if (rule.kind === 'abs' && !rule.keyword && !loose) continue;
+    if (rule.kind === 'abs' && !isValidDate(rule.y ?? 2000, rule.m, rule.d)) continue;
+    return { rule, rest: str.replace(m[0], ' ') };
+  }
+  if (loose) {
+    const m = String(str).match(/당일/);
+    if (m) return { rule: { kind: 'same' }, rest: str.replace(m[0], ' ') };
+    const d = String(str).match(/(?:매월\s*)?(\d{1,2})\s*일(?![가-힣])/);
+    if (d && +d[1] >= 1 && +d[1] <= 31) return { rule: { kind: 'dom', d: +d[1] }, rest: str.replace(d[0], ' ') };
+  }
+  return { rule: null, rest: str };
+}
+
+const lastDay = (y, m0) => new Date(y, m0 + 1, 0).getDate();
+
+/** 지급일 규칙을 일정 날짜 기준으로 'YYYY-MM-DD'로 바꾼다. */
+export function resolvePayDate(rule, eventYmd, today = new Date()) {
+  if (!rule) return null;
+  const base = eventYmd ? new Date(...eventYmd.split('-').map((v, i) => (i === 1 ? v - 1 : +v))) : null;
+  if (rule.kind === 'abs') {
+    const ref = base || startOfDay(today);
+    let y = rule.y ?? ref.getFullYear();
+    if (!rule.y && diffDays(new Date(y, rule.m - 1, rule.d), ref) < -60) y += 1;
+    return isValidDate(y, rule.m, rule.d) ? toYmd(new Date(y, rule.m - 1, rule.d)) : null;
+  }
+  if (!base) return null;
+  if (rule.kind === 'same') return toYmd(base);
+  if (rule.kind === 'days') return toYmd(addDays(base, rule.n));
+  if (rule.kind === 'month') {
+    const y = base.getFullYear();
+    const m0 = base.getMonth() + rule.n;
+    const max = lastDay(y, m0);
+    const d = rule.day === 'end' ? max : rule.day === 'same' ? Math.min(base.getDate(), max) : Math.min(rule.day, max);
+    return toYmd(new Date(y, m0, d));
+  }
+  if (rule.kind === 'dom') {
+    const m0 = base.getMonth() + (rule.d >= base.getDate() ? 0 : 1);
+    return toYmd(new Date(base.getFullYear(), m0, Math.min(rule.d, lastDay(base.getFullYear(), m0))));
+  }
+  return null;
+}
+
+// ── 지역 + 의전 제목 ────────────────────────────────────
+const NOT_REGION = new Set(['출구', '입구', '지구', '부근', '인근', '건물', '본동', '별동', '신관동', '본관동']);
+
+/** '서울 강동구 고덕동 123' → '고덕의전' */
+export function regionTitle(location) {
+  const first = String(location || '').split('\n')[0];
+  const tokens = first.split(/[\s,()[\]/]+/).filter(Boolean);
+  const find = (re) => {
+    for (const t of tokens) {
+      if (NOT_REGION.has(t)) continue;
+      const m = t.match(re);
+      if (m) return m[1];
+    }
+    return null;
+  };
+  const region =
+    find(/^([가-힣]{2,}?)(?:\d+가)?\d*동$/) ||
+    find(/^([가-힣]{1,}?)구$/) ||
+    find(/^([가-힣]{2,}?)(?:특별자치|특별|광역)?시$/) ||
+    find(/^([가-힣]{1,}?)군$/);
+  if (region) return `${region}의전`;
+  const word = (tokens[0] || '').replace(/[^\p{L}\p{N}]/gu, '');
+  return `${word}의전`;
 }
 
 // ── 시간 ────────────────────────────────────────────────
@@ -387,6 +506,8 @@ export function parseSchedule(text, { now = new Date() } = {}) {
     agency: '',
     pay: null,
     payNote: '',
+    tax: '',
+    payDate: null,
     notes: '',
     raw,
     uncertain: {},
@@ -399,6 +520,7 @@ export function parseSchedule(text, { now = new Date() } = {}) {
   let payLines = 0;
   let locationGuessed = false;
   let agencyGuessed = false;
+  let payRule = null;
 
   const setDate = (r) => {
     if (!r.date) return;
@@ -420,7 +542,16 @@ export function parseSchedule(text, { now = new Date() } = {}) {
       else if (p !== out.phone && !extraPhones.includes(p)) extraPhones.push(p);
     }
   };
-  const setPay = (value, { bare }) => {
+  // 세금·지급일 표현을 먼저 떼어 낸다. 남은 글자는 지급 조건(payNote)이 된다.
+  const takeTaxAndPayDate = (value, { loose = false } = {}) => {
+    const t = extractTax(value);
+    if (t.tax && !out.tax) out.tax = t.tax;
+    const p = extractPayDate(t.rest, { loose });
+    if (p.rule && !payRule) payRule = p.rule;
+    return { rest: p.rest, found: !!(t.tax || p.rule) };
+  };
+  const setPay = (input, { bare }) => {
+    const value = takeTaxAndPayDate(input, { loose: bare }).rest;
     const { amounts, rest, assumed } = extractAmounts(value, { bare });
     if (!amounts.length) return null;
     payLines += 1;
@@ -551,8 +682,17 @@ export function parseSchedule(text, { now = new Date() } = {}) {
         } else if (a && a !== out.agency) notes.push(`${label}: ${a}`);
         continue;
       }
+      case 'payDate':
+      case 'tax': {
+        const { rest, found } = takeTaxAndPayDate(value, { loose: true });
+        if (!found) notes.push(`${label}: ${value}`);
+        else if (field === 'payDate' && meaningful(tidy(rest))) notes.push(`${label}: ${value}`);
+        continue;
+      }
       case 'pay': {
-        if (setPay(value, { bare: true }) == null) notes.push(`${label}: ${value}`);
+        if (setPay(value, { bare: true }) == null) {
+          if (!takeTaxAndPayDate(value, { loose: true }).found) notes.push(`${label}: ${value}`);
+        }
         else if (['시급', '일당'].includes(label) && !out.payNote.includes(label)) {
           out.payNote = tidy(`${label} ${out.payNote}`);
         }
@@ -579,6 +719,13 @@ export function parseSchedule(text, { now = new Date() } = {}) {
       }
     }
 
+    if (new RegExp(PAY_WORD).test(rest) && !/원|₩|만\s*원|\d\s*만(?![가-힣])/.test(rest)) {
+      const r = takeTaxAndPayDate(rest);
+      if (r.found) {
+        rest = r.rest;
+        if (!meaningful(tidy(rest.replace(new RegExp(PAY_WORD, 'g'), ' ')))) continue;
+      }
+    }
     if (/원|₩|만\s*원|\d\s*만(?![가-힣])/.test(rest)) {
       const r = setPay(rest, { bare: false });
       if (r != null) {
@@ -629,10 +776,15 @@ export function parseSchedule(text, { now = new Date() } = {}) {
   if (!out.date) out.uncertain.date = '날짜를 찾지 못했어요';
   else if (dates.size > 1 && !out.uncertain.date) out.uncertain.date = '여러 날짜가 적혀 있어요. 첫 번째 날짜를 사용했어요';
   if (!out.title) {
-    const label = TYPES.find((t) => t.id === out.type)?.label;
-    out.title = out.type === 'etc' ? '' : `${label} 일정`;
-    out.uncertain.title = '제목을 찾지 못해 자동으로 붙였어요';
+    out.title = regionTitle(out.location);
+    out.uncertain.title = '제목을 찾지 못해 장소로 붙였어요';
   }
+  if (payRule) {
+    out.payDate = resolvePayDate(payRule, out.date, today);
+    if (!out.payDate) out.uncertain.payDate = '일정 날짜가 없어 지급일을 계산하지 못했어요';
+  }
+  // 세금 표현이 페이 줄이 아닌 곳(특이사항 등)에만 있어도 찾아 둔다.
+  if (!out.tax) out.tax = extractTax(normalize(raw)).tax;
   if (out.endTime && out.startTime && out.endTime === out.startTime) out.endTime = null;
   if (locationGuessed) out.uncertain.location = '라벨이 없어 내용으로 추정했어요';
   if (agencyGuessed) out.uncertain.agency = '라벨이 없어 내용으로 추정했어요';

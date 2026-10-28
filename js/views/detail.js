@@ -1,11 +1,10 @@
 import { store, session } from '../store.js';
-import { esc, $, toast, confirmSheet, download, go } from '../ui.js';
+import { esc, $, toast, confirmSheet, go } from '../ui.js';
 import { icon } from '../icons.js';
-import { formatDateLong, formatTime, formatTimeRange, relativeLabel, todayYmd } from '../dates.js';
+import { formatDateLong, formatDateMedium, formatTime, formatTimeRange, relativeLabel, todayYmd } from '../dates.js';
 import { formatWon, formatWonShort } from '../parser.js';
-import { typeLabel } from '../types.js';
 import { emptyState } from '../components.js';
-import { toIcs, googleCalendarUrl } from '../ics.js';
+import { googleCalendarUrl, openInDeviceCalendar } from '../ics.js';
 
 const row = (iconName, label, body) => `
   <div class="info-row">
@@ -16,7 +15,8 @@ const row = (iconName, label, body) => `
     </div>
   </div>`;
 
-export function render(root, { id }) {
+export function render(root, { id, query } = {}) {
+  const fromPay = query?.get('from') === 'pay';
   const e = store.get(id);
   if (!e) {
     root.innerHTML = `
@@ -32,14 +32,14 @@ export function render(root, { id }) {
 
   root.innerHTML = `
     <header class="topbar">
-      <a class="topbar__back" href="#/calendar?date=${esc(e.date || '')}">${icon('chevronLeft')}<span>캘린더</span></a>
+      <a class="topbar__back" href="${fromPay ? '#/pay' : `#/calendar?date=${esc(e.date || '')}`}">${icon('chevronLeft')}<span>${fromPay ? '페이' : '캘린더'}</span></a>
       <span class="topbar__spacer"></span>
       <a class="btn btn--text" href="#/event/${esc(e.id)}/edit">${icon('edit', { size: 18 })}<span>수정</span></a>
     </header>
 
     <article class="detail" data-type="${esc(e.type)}">
       <div class="detail__head">
-        <p class="detail__type"><span class="type-dot" data-type="${esc(e.type)}"></span>${typeLabel(e.type)}${rel ? `<span class="dot-sep"></span><span class="${isPast ? 'muted' : 'accent'}">${rel}</span>` : ''}</p>
+        ${rel ? `<p class="detail__type"><span class="${isPast ? 'muted' : 'accent'}">${rel}</span></p>` : ''}
         <h1 class="detail__title">${esc(e.title)}</h1>
         <p class="detail__date">${e.date ? formatDateLong(e.date) : '날짜 미정'}</p>
         <p class="detail__time num">${e.startTime ? formatTimeRange(e.startTime, e.endTime, fmt) : '시간 미정'}</p>
@@ -57,14 +57,26 @@ export function render(root, { id }) {
         }
         ${e.agency ? row('building', '에이전시', `<p class="info-row__value">${esc(e.agency)}</p>`) : ''}
         ${
-          e.pay != null || e.payNote
+          e.pay != null || e.payNote || e.tax || e.payDate
             ? row('won', '페이', `
-                ${e.pay != null ? `<p class="info-row__value amount num">${formatWon(e.pay)}<span class="amount__short">${formatWonShort(e.pay) !== formatWon(e.pay) ? formatWonShort(e.pay) : ''}</span></p>` : ''}
-                ${e.payNote ? `<p class="info-row__sub">${esc(e.payNote)}</p>` : ''}`)
+                ${e.pay != null ? `<p class="info-row__value amount num">${formatWon(e.pay)}<span class="amount__short">${formatWonShort(e.pay) !== formatWon(e.pay) ? formatWonShort(e.pay) : ''}</span></p>` : '<p class="info-row__value muted">금액 미정</p>'}
+                <dl class="pay-facts">
+                  <div><dt>세금공제</dt><dd>${e.tax ? esc(e.tax) : '<span class="muted">—</span>'}</dd></div>
+                  <div><dt>지급일</dt><dd>${e.payDate ? `<span class="num">${formatDateMedium(e.payDate)}</span>` : '<span class="muted">미정</span>'}</dd></div>
+                  ${e.payNote ? `<div><dt>조건</dt><dd>${esc(e.payNote)}</dd></div>` : ''}
+                </dl>
+                ${
+                  e.pay != null
+                    ? `<button type="button" class="paid-toggle ${e.paid ? 'is-paid' : ''}" id="paid-toggle" aria-pressed="${!!e.paid}">
+                        ${icon('check', { size: 16 })}<span>${e.paid ? `입금 완료 <span class="num">${e.paidAt ? formatDateMedium(e.paidAt) : ''}</span>` : '입금 확인하기'}</span>
+                      </button>`
+                    : ''
+                }`)
             : ''
         }
         ${e.notes ? row('note', '특이사항', `<p class="info-row__value pre">${esc(e.notes)}</p>`) : ''}
-        ${!e.location && !e.phone && !e.contactName && !e.agency && e.pay == null && !e.notes ? `<p class="info__empty">추가 정보가 없어요. <a href="#/event/${esc(e.id)}/edit">항목 추가하기</a></p>` : ''}
+        ${e.memo ? row('edit', '메모', `<p class="info-row__value pre">${esc(e.memo)}</p>`) : ''}
+        ${!e.location && !e.phone && !e.contactName && !e.agency && e.pay == null && !e.notes && !e.memo ? `<p class="info__empty">추가 정보가 없어요. <a href="#/event/${esc(e.id)}/edit">항목 추가하기</a></p>` : ''}
       </div>
 
       ${
@@ -77,8 +89,8 @@ export function render(root, { id }) {
       }
 
       <div class="detail__actions">
+        <button type="button" class="list-btn" id="export">${icon('calendar')}<span>아이폰 캘린더에 추가</span></button>
         ${e.date ? `<a class="list-btn" href="${esc(googleCalendarUrl(e))}" target="_blank" rel="noopener">${icon('calendar')}<span>Google 캘린더에 추가</span><small>새 탭</small></a>` : ''}
-        <button type="button" class="list-btn" id="export">${icon('download')}<span>iPhone 캘린더로 내보내기</span><small>.ics</small></button>
         <button type="button" class="list-btn" id="duplicate">${icon('copy')}<span>복제해서 새 일정 만들기</span></button>
         <button type="button" class="list-btn list-btn--danger" id="delete">${icon('trash')}<span>일정 삭제</span></button>
       </div>
@@ -97,12 +109,30 @@ export function render(root, { id }) {
   );
 
   $('#export', root).addEventListener('click', () => {
-    download(`${e.title.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'schedule'}.ics`, toIcs([e]), 'text/calendar;charset=utf-8');
-    toast('캘린더 파일을 만들었어요', { kind: 'success' });
+    openInDeviceCalendar(e);
+  });
+
+  $('#paid-toggle', root)?.addEventListener('click', () => {
+    try {
+      store.setPaid(e.id, !e.paid);
+    } catch (err) {
+      toast(err.message, { kind: 'error' });
+      return;
+    }
+    const prev = { paid: e.paid, paidAt: e.paidAt };
+    toast(e.paid ? '미입금으로 되돌렸어요' : '입금 완료로 표시했어요', {
+      kind: 'success',
+      action: '실행 취소',
+      onAction: () => {
+        store.update(e.id, prev);
+        render(root, { id, query });
+      },
+    });
+    render(root, { id, query });
   });
 
   $('#duplicate', root).addEventListener('click', () => {
-    const { id: _id, createdAt, updatedAt, ...rest } = e;
+    const { id: _id, createdAt, updatedAt, paid, paidAt, ...rest } = e;
     session.set('draft', { ...rest, uncertain: {}, source: 'manual' });
     go('#/review');
   });

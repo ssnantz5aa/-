@@ -2,7 +2,6 @@ import { esc } from './ui.js';
 import { icon } from './icons.js';
 import { fromYmd, timeParts, WEEKDAYS, formatTimeRange, formatTime } from './dates.js';
 import { formatWonShort } from './parser.js';
-import { typeLabel } from './types.js';
 import { store } from './store.js';
 
 const fmtSetting = () => store.settings().timeFormat;
@@ -37,7 +36,7 @@ export function eventRow(e, { highlight } = {}) {
       <span class="event-row__bar" aria-hidden="true"></span>
       <span class="event-row__body">
         <span class="event-row__title">${title}</span>
-        <span class="event-row__meta"><span class="type-label">${typeLabel(e.type)}</span>${place(e)}</span>
+        <span class="event-row__meta">${place(e).replace(sep, '') || '<span class="muted">장소 미정</span>'}</span>
       </span>
       ${e.pay ? `<span class="event-row__aside num">${formatWonShort(e.pay)}</span>` : ''}
     </a>`;
