@@ -30,6 +30,13 @@
   <div id="toast" class="toast-host" aria-live="polite"></div>
   <div id="sheet" class="sheet-host"></div>
   <noscript><p style="padding:24px">이 앱을 사용하려면 JavaScript를 켜 주세요.</p></noscript>
+  <script>
+    // 모듈을 못 읽는 오래된 브라우저나 오류가 나면 빈 화면 대신 안내를 보여 준다.
+    window.addEventListener('error', function (e) {
+      var v = document.getElementById('view');
+      if (v && !v.children.length) v.innerHTML = '<p style="padding:24px;line-height:1.6">화면을 불러오지 못했어요. 사파리나 크롬 최신 버전에서 다시 열어 주세요.<br><small>' + (e.message || '') + '</small></p>';
+    }, true);
+  </script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
