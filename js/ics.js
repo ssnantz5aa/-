@@ -101,15 +101,25 @@ export function googleCalendarUrl(e) {
 
 const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+// 아이폰은 data: 주소로 연 캘린더를 막기 때문에, 일정을 그대로 되돌려 주는 작은 서버를 거친다.
+const ICS_SERVER = 'https://slate-ics.ssnantz5aa.workers.dev/';
+
+export function toBase64Url(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 /**
  * 기기의 캘린더 앱으로 일정을 보낸다.
- * 아이폰에서는 캘린더 데이터를 직접 열어 iOS의 '일정 추가' 화면을 띄우고,
+ * 아이폰에서는 서버가 돌려주는 캘린더 파일을 열어 iOS의 '일정 추가' 화면을 띄우고,
  * 그 밖의 기기에서는 .ics 파일을 내려받는다.
  */
 export function openInDeviceCalendar(e) {
   const ics = toIcs([e]);
   if (isIOS()) {
-    location.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
+    location.href = `${ICS_SERVER}?d=${toBase64Url(ics)}`;
     return;
   }
   download(`${e.title.replace(/[\\/:*?"<>|]/g, '').slice(0, 40) || 'schedule'}.ics`, ics, 'text/calendar;charset=utf-8');

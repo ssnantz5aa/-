@@ -222,3 +222,11 @@ test('원문이 없으면 항목 요약', () => {
   assert.match(desc(toIcs([e])), /에이전시: 모노/);
   assert.match(desc(toIcs([e])), /3\.3% 공제/);
 });
+
+test('아이폰용 캘린더 주소는 한글 원문도 그대로 되살아남', async () => {
+  const { toBase64Url } = await import('../js/ics.js');
+  const raw = '고덕의전 11월 10일\n페이 25만원 (3.3% 공제)';
+  const ics = toIcs([{ id: 'a', title: '고덕의전', date: '2026-11-10', startTime: '10:00', raw }]);
+  const back = Buffer.from(toBase64Url(ics).replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+  assert.equal(back, ics);
+});
