@@ -1,10 +1,9 @@
-import { store, session } from '../store.js';
-import { esc, $, autoGrow, toast } from '../ui.js';
+import { store } from '../store.js';
+import { esc, $, toast } from '../ui.js';
 import { swipeWrap, enableSwipeDelete } from '../swipe.js';
 import { icon } from '../icons.js';
 import { eventRow, eventRowDated, emptyState } from '../components.js';
 import { WEEKDAYS, todayYmd, toYmd, addDays, formatDateMedium, toMinutes } from '../dates.js';
-import { analyzeAndReview, readClipboard } from '../analyze.js';
 
 function greeting(h) {
   if (h < 5) return '늦은 밤이에요';
@@ -20,7 +19,6 @@ export function render(root) {
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const next = todays.find((e) => (e.startTime || e.callTime) && toMinutes(e.endTime || e.startTime || e.callTime) >= nowMin);
   const upcoming = store.upcoming(toYmd(addDays(now, 1)), 5);
-  const compose = session.get('compose') || '';
 
   const summary = todays.length
     ? next
@@ -38,16 +36,6 @@ export function render(root) {
       <p class="home-head__summary">${summary}</p>
     </header>
 
-    <section class="composer" id="composer" aria-label="일정 텍스트 붙여넣기">
-      <div class="composer__progress" aria-hidden="true"></div>
-      <label class="composer__label" for="quick-text">일정 텍스트 붙여넣기</label>
-      <textarea id="quick-text" class="composer__input" rows="3" placeholder="받은 메시지나 메일을 그대로 붙여넣으세요.&#10;날짜, 시간, 장소, 연락처, 페이를 찾아 정리해 드려요." spellcheck="false">${esc(compose)}</textarea>
-      <div class="composer__bar">
-        <button type="button" class="btn btn--ghost" id="quick-paste">${icon('clipboard', { size: 18 })}<span>붙여넣기</span></button>
-        <button type="button" class="btn btn--primary" id="quick-analyze" ${compose.trim() ? '' : 'disabled'}><span>일정 분석</span>${icon('arrowRight', { size: 18 })}</button>
-      </div>
-    </section>
-
     <section class="section">
       <div class="section__head">
         <h2 class="section__title">오늘</h2>
@@ -56,7 +44,7 @@ export function render(root) {
       ${
         todays.length
           ? `<div class="list">${todays.map((e) => eventRow(e)).join('')}</div>`
-          : emptyState({ iconName: 'sun', title: '오늘은 비어 있어요', body: '위에 일정 텍스트를 붙여넣어 바로 등록할 수 있어요.' })
+          : emptyState({ iconName: 'sun', title: '오늘은 비어 있어요', body: '아래 ‘일정 추가’에서 받은 메시지를 붙여넣어 등록할 수 있어요.' })
       }
     </section>
 
@@ -105,38 +93,6 @@ export function render(root) {
       },
     });
   }
-
-  const input = $('#quick-text', root);
-  const analyzeBtn = $('#quick-analyze', root);
-  const composer = $('#composer', root);
-  autoGrow(input);
-  const sync = () => {
-    analyzeBtn.disabled = !input.value.trim();
-    session.set('compose', input.value);
-  };
-  input.addEventListener('input', sync);
-
-  $('#quick-paste', root).addEventListener('click', async () => {
-    const text = await readClipboard();
-    if (text == null) return input.focus();
-    input.value = text;
-    input.dispatchEvent(new Event('input'));
-  });
-
-  analyzeBtn.addEventListener('click', () =>
-    analyzeAndReview(input.value, {
-      onStart: () => {
-        composer.classList.add('is-busy');
-        analyzeBtn.disabled = true;
-        analyzeBtn.querySelector('span').textContent = '분석 중';
-      },
-      onEnd: () => {
-        composer.classList.remove('is-busy');
-        analyzeBtn.querySelector('span').textContent = '일정 분석';
-        sync();
-      },
-    }),
-  );
 }
 
 function groupUpcoming(list, today) {

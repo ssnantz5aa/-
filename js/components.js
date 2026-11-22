@@ -28,7 +28,7 @@ export function eventRow(e, { highlight } = {}) {
   const { meridiem, clock } = timeParts(start, fmtSetting());
   const title = highlight ? highlight(e.title) : esc(e.title);
   return `
-    <a class="event-row" href="#/event/${esc(e.id)}" data-type="${esc(e.type)}">
+    <a class="event-row" href="#/event/${esc(e.id)}" data-type="${esc(e.type)}" data-pay="${e.paid ? 'paid' : 'unpaid'}">
       <span class="event-row__time ${start ? '' : 'is-empty'}">
         ${start ? `${meridiem ? `<small>${meridiem}</small>` : ''}<span>${clock}</span>` : '<span class="muted">미정</span>'}
         ${endLabel(e) ? `<em>${endLabel(e)}</em>` : ''}
@@ -48,7 +48,7 @@ export function eventRowDated(e, { highlight, today, repeat = false } = {}) {
   const title = highlight ? highlight(e.title) : esc(e.title);
   const isToday = e.date === today;
   return `
-    <a class="event-row event-row--dated" href="#/event/${esc(e.id)}" data-type="${esc(e.type)}">
+    <a class="event-row event-row--dated" href="#/event/${esc(e.id)}" data-type="${esc(e.type)}" data-pay="${e.paid ? 'paid' : 'unpaid'}">
       <span class="event-row__date ${isToday ? 'is-today' : ''} ${repeat ? 'is-repeat' : ''}" ${repeat ? 'aria-hidden="true"' : ''}>
         <span class="num">${d.getDate()}</span>
         <small>${isToday ? '오늘' : WEEKDAYS[d.getDay()]}</small>

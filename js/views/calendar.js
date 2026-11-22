@@ -6,6 +6,27 @@ import {
   WEEKDAYS, toYmd, fromYmd, isYmd, addDays, addMonths, startOfWeek, todayYmd, formatDateLong, toMinutes, timeParts,
 } from '../dates.js';
 import { startManual } from '../analyze.js';
+import { formatWon } from '../parser.js';
+
+/** 보고 있는 달의 번 돈: 페이가 적힌 일정 합계, 받음/안받음 나눔 */
+function monthEarnings(sel) {
+  const prefix = toYmd(sel).slice(0, 7);
+  const list = store.all().filter((e) => e.date && e.date.startsWith(prefix) && Number(e.pay) > 0);
+  const sum = (arr) => arr.reduce((n, e) => n + Number(e.pay), 0);
+  const paid = list.filter((e) => e.paid === true);
+  const unpaid = list.filter((e) => e.paid !== true);
+  return `
+    <section class="earn" aria-label="${sel.getMonth() + 1}월 번 돈">
+      <div class="earn__main">
+        <span class="earn__label"><span class="num">${sel.getMonth() + 1}</span>월 총 번 돈</span>
+        <span class="earn__amount num">${formatWon(sum(list))}</span>
+      </div>
+      <div class="earn__split">
+        <span class="earn__part" data-pay="paid"><i aria-hidden="true"></i>받음 <span class="num">${formatWon(sum(paid))}</span> <small class="num">${paid.length}건</small></span>
+        <span class="earn__part" data-pay="unpaid"><i aria-hidden="true"></i>안 받음 <span class="num">${formatWon(sum(unpaid))}</span> <small class="num">${unpaid.length}건</small></span>
+      </div>
+    </section>`;
+}
 
 const HOUR = 52; // 일간 보기 1시간 높이(px)
 const VIEWS = [
@@ -42,6 +63,7 @@ export function render(root, { query }) {
       <div class="segmented" role="tablist" aria-label="캘린더 보기">
         ${VIEWS.map((v) => `<button type="button" role="tab" class="segmented__item" data-view="${v.id}" aria-selected="${state.view === v.id}">${v.label}</button>`).join('')}
       </div>
+      ${monthEarnings(sel)}
       <div class="cal-body" id="cal-body">
         ${state.view === 'month' ? monthView(sel, today) : state.view === 'week' ? weekView(sel, today) : dayView(sel, today)}
       </div>`;
@@ -141,11 +163,11 @@ function monthView(sel, today) {
       <button type="button" class="${cls}" data-date="${ymd}" aria-label="${label}" aria-pressed="${ymd === selYmd}">
         <span class="cell__num num">${day.getDate()}</span>
         <span class="cell__marks" aria-hidden="true">
-          ${events.slice(0, 3).map((e) => `<span class="mark" data-type="${esc(e.type)}"></span>`).join('')}
+          ${events.slice(0, 3).map((e) => `<span class="mark" data-type="${esc(e.type)}" data-pay="${e.paid ? 'paid' : 'unpaid'}"></span>`).join('')}
           ${events.length > 3 ? `<span class="mark-more num">+${events.length - 3}</span>` : ''}
         </span>
         <span class="cell__events" aria-hidden="true">
-          ${events.slice(0, events.length > 3 ? 2 : 3).map((e) => `<span class="cell__event" data-type="${esc(e.type)}">${esc(e.title)}</span>`).join('')}
+          ${events.slice(0, events.length > 3 ? 2 : 3).map((e) => `<span class="cell__event" data-type="${esc(e.type)}" data-pay="${e.paid ? 'paid' : 'unpaid'}">${esc(e.title)}</span>`).join('')}
           ${events.length > 3 ? `<span class="cell__more num">+${events.length - 2}개</span>` : ''}
         </span>
       </button>`);
@@ -199,7 +221,7 @@ function weekStrip(sel, today) {
           <button type="button" class="${cls}" data-date="${ymd}" aria-pressed="${ymd === selYmd}" aria-label="${day.getMonth() + 1}월 ${day.getDate()}일${events.length ? `, 일정 ${events.length}개` : ''}">
             <span class="strip__wd">${WEEKDAYS[day.getDay()]}</span>
             <span class="strip__num num">${day.getDate()}</span>
-            <span class="cell__marks" aria-hidden="true">${events.slice(0, 3).map((e) => `<span class="mark" data-type="${esc(e.type)}"></span>`).join('')}</span>
+            <span class="cell__marks" aria-hidden="true">${events.slice(0, 3).map((e) => `<span class="mark" data-type="${esc(e.type)}" data-pay="${e.paid ? 'paid' : 'unpaid'}"></span>`).join('')}</span>
           </button>`;
       }).join('')}
     </div>`;
@@ -286,7 +308,7 @@ function dayView(sel, today) {
             .map(({ e, s, end, col, cols: n }) => {
               const short = end - s < 50;
               return `
-                <a class="block ${short ? 'is-short' : ''}" data-type="${esc(e.type)}" href="#/event/${esc(e.id)}"
+                <a class="block ${short ? 'is-short' : ''}" data-type="${esc(e.type)}" data-pay="${e.paid ? 'paid' : 'unpaid'}" href="#/event/${esc(e.id)}"
                    style="top:${(s / 60) * HOUR}px;height:${((end - s) / 60) * HOUR - 2}px;left:calc(${(col / n) * 100}% + 2px);width:calc(${100 / n}% - 4px)">
                   <span class="block__title">${esc(e.title)}</span>
                   <span class="block__time num">${timeParts(e.startTime || e.callTime, fmt).meridiem} ${timeParts(e.startTime || e.callTime, fmt).clock}${e.location && !short ? ` · ${esc(e.location.split('\n')[0])}` : ''}</span>
