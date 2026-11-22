@@ -3,6 +3,8 @@ import { $, $$, toast, confirmSheet, download } from '../ui.js';
 import { icon } from '../icons.js';
 import { toIcs } from '../ics.js';
 import { todayYmd } from '../dates.js';
+import { esc } from '../ui.js';
+import { resetStatuses, retryPending } from '../urigotgan.js';
 
 const seg = (key, options, value) => `
   <div class="segmented segmented--sm" role="radiogroup">
@@ -25,6 +27,24 @@ export function render(root) {
         <div class="setting"><span class="setting__label">주 시작 요일</span>${seg('weekStart', [[0, '일요일'], [1, '월요일']], s.weekStart)}</div>
         <div class="setting"><span class="setting__label">시간 표시</span>${seg('timeFormat', [['12h', '오전/오후'], ['24h', '24시간']], s.timeFormat)}</div>
         <div class="setting"><span class="setting__label">기본 캘린더 보기</span>${seg('defaultView', [['month', '월'], ['week', '주'], ['day', '일']], s.defaultView)}</div>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2 class="group__title">우리곳간 연결</h2>
+      <div class="group__body">
+        <div class="setting setting--stack">
+          <label class="setting__label" for="urigotgan-key">우리곳간 열쇠</label>
+          <div class="key-field">
+            <input id="urigotgan-key" class="input key-field__input" type="password" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ob_로 시작하는 열쇠" value="${esc(s.urigotganKey || '')}">
+            <button type="button" class="btn btn--secondary btn--sm" id="urigotgan-save">저장</button>
+          </div>
+          <p class="setting__help">${
+            String(s.urigotganKey || '').startsWith('ob_')
+              ? '연결됨 · 페이를 입금 완료로 표시하면 우리곳간에 수입으로 한 번만 기록돼요.'
+              : '우리곳간 앱 → 더보기 → 설정 → 문자 자동 기록·위젯 열쇠 → 새 열쇠 만들기 → ‘열쇠 복사’ 후 같은 폰에서 붙여넣어 주세요.'
+          }</p>
+        </div>
       </div>
     </section>
 
@@ -68,6 +88,24 @@ export function render(root) {
       });
     }),
   );
+
+  $('#urigotgan-save', root).addEventListener('click', () => {
+    const value = $('#urigotgan-key', root).value.trim();
+    if (value && !value.startsWith('ob_')) {
+      toast('열쇠는 ob_로 시작해요. 우리곳간에서 ‘열쇠 복사’로 다시 받아 주세요', { kind: 'error' });
+      return;
+    }
+    try {
+      store.setSetting('urigotganKey', value);
+    } catch (err) {
+      toast(err.message, { kind: 'error' });
+      return;
+    }
+    resetStatuses();
+    toast(value ? '우리곳간과 연결했어요' : '우리곳간 연결을 껐어요', { kind: 'success' });
+    if (value) retryPending();
+    render(root);
+  });
 
   const stamp = todayYmd().replace(/-/g, '');
   $('#export-ics', root).addEventListener('click', () => {

@@ -4,6 +4,21 @@ import { icon } from '../icons.js';
 import { emptyState } from '../components.js';
 import { fromYmd, diffDays, todayYmd, addDays, toYmd, WEEKDAYS, formatDateMedium } from '../dates.js';
 import { formatWon, formatWonShort } from '../parser.js';
+import { isConnected, statusOf, isPending, syncPay, refreshStatuses } from '../urigotgan.js';
+
+/** 입금 완료 줄 아래 '우리곳간 ✓' / '우리곳간에 없음 · 보내기' */
+function ugLine(e) {
+  const st = statusOf(e.id);
+  if (!st && !isPending(e.id)) return '';
+  if (st?.recorded) {
+    const diff = st.amount != null && Number(st.amount) !== Number(e.pay);
+    return `<div class="pay-row__ug"><span class="ug-chip ug-chip--ok">${icon('check', { size: 12 })}우리곳간${diff ? ` <span class="num">${formatWon(st.amount)}</span>` : ''}</span></div>`;
+  }
+  return `<div class="pay-row__ug"><button type="button" class="ug-send" data-ug-send="${esc(e.id)}">우리곳간에 없음 · 보내기</button></div>`;
+}
+
+/** 우리곳간 응답을 기다리되 너무 오래 걸리면 먼저 넘어간다. */
+const within = (promise, ms) => Promise.race([promise, new Promise((r) => setTimeout(() => r(undefined), ms))]);
 
 const RECENT_DAYS = 30; // 입금 확인 후 이 기간까지는 '입금 완료'를 뚜렷하게 보여 준다.
 
@@ -89,10 +104,11 @@ function payRow(e, today, { mode }) {
           ${icon('check', { size: 18 })}
         </button>
       </div>
+      ${paid && isConnected() ? ugLine(e) : ''}
     </div>`;
 }
 
-export function render(root) {
+export function render(root, opts = {}) {
   const today = todayYmd();
   const all = store.all();
   const g = groupPays(all, today);
@@ -167,11 +183,11 @@ export function render(root) {
 
   $('#toggle-old', root)?.addEventListener('click', () => {
     state.showOld = !state.showOld;
-    render(root);
+    render(root, { quiet: true });
   });
   $('#toggle-upcoming', root)?.addEventListener('click', () => {
     state.showUpcoming = !state.showUpcoming;
-    render(root);
+    render(root, { quiet: true });
   });
 
   $$('[data-toggle]', root).forEach((b) =>
@@ -186,6 +202,7 @@ export function render(root) {
         toast(err.message, { kind: 'error' });
         return;
       }
+      const sync = syncPay(e.id);
       b.disabled = true;
       b.classList.toggle('is-on', !prev.paid);
       b.classList.add('is-confirming');
@@ -193,9 +210,13 @@ export function render(root) {
       row.classList.add('is-updating');
       await new Promise((resolve) => setTimeout(resolve, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 320));
       if (!row.isConnected) return;
-      render(root);
-      toast(prev.paid ? `‘${e.title}’ 미입금으로 되돌렸어요` : `‘${e.title}’ 입금 완료`, {
-        kind: 'success',
+      const r = await within(sync, 2500);
+      if (!root.isConnected) return;
+      render(root, { quiet: true });
+      const base = prev.paid ? `‘${e.title}’ 미입금으로 되돌렸어요` : `‘${e.title}’ 입금 완료`;
+      // 우리곳간에 못 보냈어도 실행 취소는 남겨 둔다.
+      toast(r?.message ? `${base} · ${r.message}` : base, {
+        kind: r && !r.ok ? 'error' : 'success',
         action: '실행 취소',
         onAction: () => {
           try {
@@ -203,9 +224,33 @@ export function render(root) {
           } catch (err) {
             toast(err.message, { kind: 'error' });
           }
-          render(root);
+          render(root, { quiet: true });
+          syncPay(e.id).then((u) => {
+            if (u?.message) toast(u.message, { kind: u.ok ? 'default' : 'error' });
+            if (root.isConnected && location.hash.startsWith('#/pay')) render(root, { quiet: true });
+          });
         },
       });
     }),
   );
+
+  $$('[data-ug-send]', root).forEach((b) =>
+    b.addEventListener('click', async () => {
+      b.disabled = true;
+      b.textContent = '보내는 중…';
+      const r = await syncPay(b.dataset.ugSend);
+      if (r?.message) toast(r.message, { kind: r.ok ? 'success' : 'error' });
+      if (root.isConnected) render(root, { quiet: true });
+    }),
+  );
+
+  // 페이 탭을 열 때 한 번 우리곳간 기록 여부를 확인한다.
+  if (!opts.quiet && isConnected()) {
+    const ids = [...g.recent, ...g.old].map((e) => e.id);
+    if (ids.length) {
+      refreshStatuses(ids).then((changed) => {
+        if (changed && root.isConnected && location.hash.startsWith('#/pay')) render(root, { quiet: true });
+      });
+    }
+  }
 }

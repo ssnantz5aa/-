@@ -9,6 +9,7 @@ import * as calendar from './views/calendar.js';
 import * as search from './views/search.js';
 import * as settings from './views/settings.js';
 import * as pay from './views/pay.js';
+import { retryPending } from './urigotgan.js';
 
 const TABS = [
   { id: 'home', label: '홈', icon: 'home', href: '#/home' },
@@ -71,6 +72,9 @@ function route() {
 
 window.addEventListener('hashchange', route);
 route();
+
+// 지난번에 우리곳간으로 못 보낸 입금 기록을 다시 보낸다(열쇠가 없으면 아무것도 안 함).
+retryPending();
 
 if (store.loadError) toast('저장된 데이터를 읽지 못해 새로 시작했어요. 이전 데이터는 별도로 보관했어요.', { kind: 'error', duration: 5000 });
 
