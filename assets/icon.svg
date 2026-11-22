@@ -1,9 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" fill="#a34f39"/>
-  <rect x="120" y="132" width="272" height="264" rx="32" fill="#f7f3ec"/>
-  <rect x="144" y="156" width="224" height="216" rx="8" fill="#a34f39"/>
-  <rect x="176" y="104" width="24" height="76" rx="12" fill="#f7f3ec"/>
-  <rect x="312" y="104" width="24" height="76" rx="12" fill="#f7f3ec"/>
-  <rect x="140" y="204" width="232" height="24" rx="0" fill="#f7f3ec"/>
-  <polygon points="192,294 210,276 242,308 302,248 320,266 242,344" fill="#f7f3ec"/>
+  <rect x="100" y="132" width="312" height="280" rx="44" fill="#f7f3ec"/>
+  <rect x="100" y="132" width="312" height="76" rx="44" fill="#eee0d5"/>
+  <rect x="100" y="172" width="312" height="36" rx="0" fill="#eee0d5"/>
+  <rect x="168" y="100" width="28" height="72" rx="14" fill="#45372e"/>
+  <rect x="316" y="100" width="28" height="72" rx="14" fill="#45372e"/>
+  <rect x="137" y="234" width="66" height="58" rx="14" fill="#e6dacd"/>
+  <rect x="223" y="234" width="66" height="58" rx="14" fill="#1f2f6e"/>
+  <rect x="309" y="234" width="66" height="58" rx="14" fill="#e6dacd"/>
+  <rect x="137" y="312" width="66" height="58" rx="14" fill="#e6dacd"/>
+  <rect x="223" y="312" width="66" height="58" rx="14" fill="#e6dacd"/>
+  <rect x="309" y="312" width="66" height="58" rx="14" fill="#2f7be0"/>
+  <polygon points="240,264 247,257 253,263 268,248 275,255 253,277" fill="#f7f3ec"/>
 </svg>
