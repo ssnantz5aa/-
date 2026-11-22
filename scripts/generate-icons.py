@@ -1,4 +1,4 @@
-﻿"""Rebuild the app icon (PNGs + SVG); requires Pillow and Pretendard Bold.
+﻿"""Rebuild the app icon (PNGs + SVG); requires Pillow and the Broadway font (falls back to Pretendard Bold).
 
 Deep navy background, the linen calendar page (one navy day with a check =
 pay received, one blue day = not yet), and the "SSNA" wordmark below it.
@@ -23,12 +23,16 @@ SCALE = 4
 S = 512 * SCALE
 
 FONT_CANDIDATES = [
+    Path('C:/Windows/Fonts/BROADW.TTF'),  # Broadway (사용자 선택)
     Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft/Windows/Fonts/Pretendard-Bold.otf',
     Path('C:/Windows/Fonts/Pretendard-Bold.otf'),
 ]
+# ICON_FONT=글꼴파일 로 다른 글꼴을 쓸 수 있다. ICON_PREVIEW=파일.png 면 미리보기만 만든다.
+if os.environ.get('ICON_FONT'):
+    FONT_CANDIDATES.insert(0, Path(os.environ['ICON_FONT']))
 font_path = next((p for p in FONT_CANDIDATES if p.exists()), None)
 if not font_path:
-    raise SystemExit('Pretendard-Bold.otf 글꼴이 필요합니다')
+    raise SystemExit('Broadway 또는 Pretendard-Bold 글꼴이 필요합니다')
 
 canvas = Image.new('RGB', (S, S), BG)
 draw = ImageDraw.Draw(canvas)
@@ -63,17 +67,24 @@ check = [(nx + 14, ny + 26), (nx + 20, ny + 20), (nx + 25, ny + 25),
 draw.polygon([(x * SCALE, y * SCALE) for x, y in check], fill=LINEN)
 
 # SSNA 글자: 달력 폭에 맞춰 아래쪽에
-target = (PW + 20) * SCALE
-size = 200
+target_w, max_h = (PW + 20) * SCALE, 92 * SCALE
+size = 120
 while True:
-    font = ImageFont.truetype(str(font_path), size)
+    font = ImageFont.truetype(str(font_path), size + 4)
     l, t, r, b = draw.textbbox((0, 0), TEXT, font=font)
-    if r - l >= target:
+    if r - l > target_w or b - t > max_h:
         break
     size += 4
+font = ImageFont.truetype(str(font_path), size)
+l, t, r, b = draw.textbbox((0, 0), TEXT, font=font)
 w, h = r - l, b - t
-top = (PY + PH + 36) * SCALE
+# 달력 아래 ~ (아래 여백 = 위쪽 고리 여백 70) 사이 가운데
+top = (PY + PH) * SCALE + ((512 - 70 - PY - PH) * SCALE - h) / 2
 draw.text(((S - w) / 2 - l, top - t), TEXT, font=font, fill=LINEN)
+
+if os.environ.get('ICON_PREVIEW'):
+    canvas.resize((512, 512), Image.Resampling.LANCZOS).save(os.environ['ICON_PREVIEW'])
+    raise SystemExit(0)
 
 for px, name in [(512, 'icon-512.png'), (180, 'apple-touch-icon.png')]:
     canvas.resize((px, px), Image.Resampling.LANCZOS).save(ROOT / 'assets' / name)
