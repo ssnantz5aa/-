@@ -1,5 +1,6 @@
 import { store, session } from '../store.js';
-import { esc, $, autoGrow } from '../ui.js';
+import { esc, $, autoGrow, toast } from '../ui.js';
+import { swipeWrap, enableSwipeDelete } from '../swipe.js';
 import { icon } from '../icons.js';
 import { eventRow, eventRowDated, emptyState } from '../components.js';
 import { WEEKDAYS, todayYmd, toYmd, addDays, formatDateMedium, toMinutes } from '../dates.js';
@@ -66,10 +67,44 @@ export function render(root) {
               <h2 class="section__title">다가오는 일정</h2>
               <a class="section__link" href="#/calendar">캘린더 ${icon('chevronRight', { size: 16 })}</a>
             </div>
-            <div class="list">${groupUpcoming(upcoming, today)}</div>
+            <div class="list" id="upcoming-list">${groupUpcoming(upcoming, today)}</div>
           </section>`
         : ''
     }`;
+
+  // 다가오는 일정: 왼쪽으로 밀면 삭제
+  const upList = $('#upcoming-list', root);
+  if (upList) {
+    enableSwipeDelete(upList, {
+      onDelete: (id, el) => {
+        const e = store.get(id);
+        if (!e) return;
+        el.classList.add('is-removing');
+        setTimeout(() => {
+          try {
+            store.remove(id);
+          } catch (err) {
+            toast(err.message, { kind: 'error' });
+            render(root);
+            return;
+          }
+          render(root);
+          toast(`‘${e.title}’ 삭제했어요`, {
+            action: '실행 취소',
+            onAction: () => {
+              try {
+                store.restore(e);
+              } catch (err) {
+                toast(err.message, { kind: 'error' });
+              }
+              const onHome = !location.hash || location.hash === '#/' || location.hash.startsWith('#/home');
+              if (root.isConnected && onHome) render(root);
+            },
+          });
+        }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
+      },
+    });
+  }
 
   const input = $('#quick-text', root);
   const analyzeBtn = $('#quick-analyze', root);
@@ -111,7 +146,7 @@ function groupUpcoming(list, today) {
       const label = e.date.slice(0, 7);
       const head = label !== lastMonth && lastMonth ? `<div class="list__divider">${formatDateMedium(e.date).replace(/\s*\d+일.*/, '')}</div>` : '';
       lastMonth = label;
-      return head + eventRowDated(e, { today, repeat: !head && list[i - 1]?.date === e.date });
+      return head + swipeWrap(e.id, eventRowDated(e, { today, repeat: !head && list[i - 1]?.date === e.date }));
     })
     .join('');
 }
