@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSchedule, formatPhone, formatWonShort, regionTitle } from '../js/parser.js';
+import { parseSchedule, formatPhone, formatWonShort, regionTitle, findEventName } from '../js/parser.js';
 import { toIcs } from '../js/ics.js';
 
 const now = new Date(2026, 9, 21, 10, 0); // 2026-10-21 (수)
@@ -51,7 +51,7 @@ test('라벨 없는 카톡 메시지', () => {
   assert.equal(r.startTime, '14:00');
   assert.equal(r.endTime, '18:00');
   assert.equal(r.type, 'event');
-  assert.match(r.title, /신세계 팝업 행사 MC/);
+  assert.equal(r.title, '신세계 팝업 행사');
   assert.match(r.location, /더현대 서울/);
   assert.equal(r.pay, 300000);
   assert.ok(r.uncertain.pay, '단위 없는 금액은 확인 필요');
@@ -156,6 +156,53 @@ test('제목이 없으면 지역 + 의전', () => {
   const r = parse('10월 30일 오전 10시\n장소: 서울 강동구 고덕동 고덕로 333');
   assert.equal(r.title, '고덕의전');
   assert.ok(r.uncertain.title);
+});
+
+// ── 행사명 제목 ──
+test('첫 줄이 모집 문구여도 행사명을 제목으로', () => {
+  const r = parse(`[의전 모집] 급구합니다
+11/5(목) 오전 10시 과천시청 대강당
+제5회 과천시민대상 시상식 의전 2명
+페이 15만원 / 당일 지급
+문의 010-1234-5678 김실장`);
+  assert.equal(r.title, '제5회 과천시민대상 시상식');
+  assert.equal(r.uncertain.title, undefined);
+});
+
+test('문장 속 행사명만 뽑음', () => {
+  const r = parse('안녕하세요 박실장입니다\n내일 오후 2시 정부과천청사에서 2026 국토교통 혁신대상 시상식 의전 있습니다');
+  assert.equal(r.title, '2026 국토교통 혁신대상 시상식');
+});
+
+test('따옴표 안 행사명', () => {
+  const r = parse('의전 인원 구합니다\n「한국도로공사 신청사 기공식」\n11월 7일 10시 김천');
+  assert.equal(r.title, '한국도로공사 신청사 기공식');
+});
+
+test('기관명이 붙은 개소식', () => {
+  assert.equal(findEventName('과천청소년센터 개소식 의전').name, '과천청소년센터 개소식');
+  assert.equal(findEventName('11/5 OO건설 신사옥 준공식에서 의전').name, 'OO건설 신사옥 준공식');
+  assert.equal(findEventName('창립 30주년 기념식 및 만찬').name, '창립 30주년 기념식 및 만찬');
+});
+
+test('행사 종류만 있으면 지역 + 하는 일', () => {
+  const r = parse('기공식 의전 구합니다\n11/5 오전 10시\n장소: 과천시 갈현동 공사현장');
+  assert.equal(r.title, '갈현기공식');
+  assert.ok(r.uncertain.title);
+  const r2 = parse('과천 시상식 의전 있어요\n11/5 오후 3시\n장소: 과천시민회관');
+  assert.equal(r2.title, '과천시상식');
+});
+
+test('행사 이야기가 없으면 지역 + 의전', () => {
+  const r = parse('의전 2명 필요합니다\n11/5 오전 10시\n장소: 과천시민회관 대극장');
+  assert.equal(r.title, '과천의전');
+  assert.equal(parse('11/10 과천 의전 1명\n오전 9시 대회의실').title, '과천의전', '대회의실은 행사가 아님');
+  assert.equal(parse('내일 의전 가능하신 분?\n송도컨벤시아 3층\n오후 1시~5시').title, '송도의전');
+});
+
+test('행사명 라벨이 있으면 그대로', () => {
+  const r = parse('행사명: 과천시 시민의 날\n일시: 11/5 10시\n내용: 시상식 의전');
+  assert.equal(r.title, '과천시 시민의 날');
 });
 
 // ── 세금공제 ──
