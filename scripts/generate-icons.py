@@ -10,7 +10,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
-NAVY = '#1f2f6e'
+NAVY = '#141c3c'
 LINEN = '#f7f3ec'
 TERRACOTTA = '#c4664b'
 TEXT = 'SSNA'
