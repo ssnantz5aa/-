@@ -65,7 +65,7 @@ const EMOJI_LABELS = [
 const LEADING_JUNK = /^(?:[\s\-•·*▶▷►■□▪▫○●◆◇★☆✔✓✅☑※>❯→=_~]|\p{Extended_Pictographic}|️)+/u;
 const NUMBERED = /^\d{1,2}[.)]\s+(?=\D)/;
 const GREETING = /^(?:[^\s\d]{1,8}님[,!.~\s]*)?(?:안녕하세요|안녕하십니까|감사합니다|고맙습니다|수고하세요|수고하십시오|수고하셨습니다|잘\s*부탁|확인\s*부탁|부탁드립니다|참고\s*부탁|좋은\s*(?:하루|저녁|주말)|문의\s*주세요|회신\s*부탁)/;
-const ADDRESS_RE = /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)\S*\s+\S+(?:시|구|군)|\S+(?:구|동|읍|면)\s+\S+(?:로|길)\s*\d|\S+(?:로|길)\s*\d+(?:-\d+)?(?:\s|,|$)|\S+역\s*\d+\s*번\s*출구|스튜디오|빌딩|센터|호텔|타워|컨벤션|\S+홀(?=\s|,|$)/;
+const ADDRESS_RE = /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)\S*\s+\S+(?:시|구|군)|\S+(?:구|동|읍|면)\s+\S+(?:로|길)\s*\d|\S+(?:로|길)\s*\d+(?:-\d+)?(?:\s|,|$)|\S+역\s*\d+\s*번\s*출구|스튜디오|빌딩|센터|호텔|타워|컨벤션|\S+홀(?=\s|,|$)|\d+\s*층(?=\s|,|$)|컨벤시아|회관|시청|구청|군청|청사|강당|전시장|킨텍스|코엑스|벡스코|세텍/;
 const AGENCY_RE = /에이전시|엔터테인먼트|엔터(?![가-힣])|프로덕션|컴퍼니|캐스팅|\(주\)|㈜|주식회사|매니지먼트/;
 const LETTERS = /[\p{L}]/gu;
 
@@ -232,11 +232,28 @@ export function resolvePayDate(rule, eventYmd, today = new Date()) {
   return null;
 }
 
-// ── 지역 + 의전 제목 ────────────────────────────────────
+// ── 지역 + 하는 일 제목 ─────────────────────────────────
 const NOT_REGION = new Set(['출구', '입구', '지구', '부근', '인근', '건물', '본동', '별동', '신관동', '본관동']);
 
-/** '서울 강동구 고덕동 123' → '고덕의전' */
-export function regionTitle(location) {
+// '과천시민회관'처럼 행정구역 글자가 붙지 않은 장소에서도 지역을 찾기 위한 시·군·구·동네 이름.
+// 광역 시도(서울·부산·경기 등)는 너무 넓어서 넣지 않는다.
+const KNOWN_REGIONS = `
+수원 성남 고양 용인 부천 안산 안양 남양주 화성 평택 의정부 시흥 파주 광명 김포 군포 이천 양주 오산 구리 안성 포천 의왕 하남 여주 동두천 과천
+춘천 원주 강릉 동해 태백 속초 삼척 청주 충주 제천 천안 공주 보령 아산 서산 논산 계룡 당진 전주 군산 익산 정읍 남원 김제
+목포 여수 순천 나주 광양 포항 경주 김천 안동 구미 영주 영천 상주 문경 경산 창원 진주 통영 사천 김해 밀양 거제 양산 서귀포
+가평 양평 연천 홍천 횡성 영월 평창 정선 철원 화천 양구 인제 양양 보은 옥천 영동 증평 진천 괴산 음성 단양 금산 부여 서천 청양 홍성 예산 태안
+완주 진안 무주 임실 순창 고창 부안 담양 곡성 구례 고흥 화순 장흥 강진 해남 영암 무안 함평 장성 완도 진도 신안
+의성 청송 영양 영덕 청도 고령 성주 칠곡 예천 봉화 울진 울릉 의령 함안 창녕 남해 하동 산청 함양 거창 합천 기장 달성 강화 옹진 울주
+종로 용산 성동 광진 동대문 중랑 성북 강북 도봉 노원 은평 서대문 마포 양천 강서 구로 금천 영등포 동작 관악 서초 강남 송파 강동
+해운대 수영 사하 금정 연제 부산진 동래 수성 달서 유성 부평 계양 남동 미추홀 연수
+여의도 잠실 성수 홍대 신촌 이태원 압구정 청담 판교 분당 일산 광화문 명동 동탄 송도 청라 영종 고덕 목동 상암 마곡 왕십리 문정 위례 광교 수지 기흥 평촌 산본 킨텍스 코엑스
+`
+  .split(/\s+/)
+  .filter(Boolean)
+  .sort((a, b) => b.length - a.length);
+
+/** 장소 문자열에서 지역 이름만 뽑는다. '서울 강동구 고덕동 123' → '고덕' */
+export function regionOf(location) {
   const first = String(location || '').split('\n')[0];
   const tokens = first.split(/[\s,()[\]/]+/).filter(Boolean);
   const find = (re) => {
@@ -247,14 +264,125 @@ export function regionTitle(location) {
     }
     return null;
   };
-  const region =
+  const known = () => {
+    for (const t of tokens) for (const r of KNOWN_REGIONS) if (t.includes(r)) return r;
+    return null;
+  };
+  return (
     find(/^([가-힣]{2,}?)(?:\d+가)?\d*동$/) ||
     find(/^([가-힣]{1,}?)구$/) ||
     find(/^([가-힣]{2,}?)(?:특별자치|특별|광역)?시$/) ||
-    find(/^([가-힣]{1,}?)군$/);
-  if (region) return `${region}의전`;
-  const word = (tokens[0] || '').replace(/[^\p{L}\p{N}]/gu, '');
-  return `${word}의전`;
+    find(/^([가-힣]{1,}?)군$/) ||
+    known() ||
+    (tokens[0] || '').replace(/[^\p{L}\p{N}]/gu, '')
+  );
+}
+
+/** '서울 강동구 고덕동 123' → '고덕의전', ('과천시민회관', '기공식') → '과천기공식' */
+export function regionTitle(location, work = '의전') {
+  return `${regionOf(location)}${work}`;
+}
+
+/** 장소가 없을 때 원문에서 지역 낱말(과천, 과천시, 강남역 등)을 찾는다. 낱말 전체가 지역일 때만 인정한다. */
+function regionInText(raw) {
+  for (const t of String(raw || '').split(/[\s,()[\]/]+/)) {
+    const m = t.match(/^([가-힣]{2,4}?)(?:특별자치|특별|광역)?(?:시|군|구|역)?(?:에서|에)?$/);
+    if (m && KNOWN_REGIONS.includes(m[1])) return m[1];
+  }
+  return '';
+}
+
+// ── 행사명 찾기 ─────────────────────────────────────────
+// 제목이 되는 행사 종류. 행사명이 없을 때는 '지역 + 이 낱말'로 제목을 붙인다.
+const CEREMONY_WORDS = `
+이취임식 창립기념식 기념행사 시상식 기공식 착공식 준공식 개소식 개관식 개원식 개장식 개통식 개막식 폐막식 개회식 폐회식 기념식 출범식 발대식
+선포식 협약식 체결식 조인식 서명식 제막식 취임식 퇴임식 임명식 수여식 전달식 수료식 졸업식 입학식 입교식 시무식 종무식 봉헌식 헌정식
+추모식 위령제 기념일 포럼 세미나 컨퍼런스 콘퍼런스 심포지엄 박람회 엑스포 전시회 설명회 간담회 토론회 정기총회 총회 대회 축제 페스티벌
+갈라 만찬 오찬 리셉션 시연회 발표회 보고회 쇼케이스 런칭쇼 기자회견 결혼식 콘서트 공연 시사회 연회 환영회 송년회 신년회 하례식
+`
+  .split(/\s+/)
+  .filter(Boolean);
+// 이름의 끝은 될 수 있지만 '지역 + 하는 일'에는 쓰지 않는 넓은 낱말
+const GENERIC_EVENT_WORDS = ['행사', '이벤트', '팝업스토어', '팝업', '프로모션', '런칭', '론칭'];
+const EVENT_ALT = [...CEREMONY_WORDS, ...GENERIC_EVENT_WORDS].sort((a, b) => b.length - a.length).join('|');
+const EVENT_KW_RE = new RegExp(`(${EVENT_ALT})`);
+const CEREMONY_RE = new RegExp(`(${[...CEREMONY_WORDS].sort((a, b) => b.length - a.length).join('|')})`);
+
+// 행사명 앞에서 이름 모으기를 멈추는 낱말
+const NAME_STOP = /^(?:오전|오후|아침|점심|저녁|낮|밤|새벽|오늘|내일|모레|금일|명일|당일|이번|이번주|다음|다음주|다음달|이번달|매주|안녕하세요|안녕하십니까|저희|저|제가|혹시|급구|급|모집|구인|의전|도우미|진행요원|요원|스태프|스탭|알바|필요|있습니다|입니다|관련|및|겸|[월화수목금토일]|[월화수목금토일]요일)$/;
+// 장소의 일부(층·강당·홀 등)로 보이는 낱말
+const NAME_PLACE = /(?:대강당|강당|홀|볼룸|회의실|전시장|연회장|로비|광장|\d+층|앞)$/;
+// 낱말 끝의 조사: 이게 붙어 있으면 앞말은 장소·시간 설명이다.
+const NAME_PARTICLE = /(?:에서|에게|께서|에|으로|님|,)$/;
+// 모집 글 머리말처럼 행사명이 아닌 줄
+const POSTING_RE = /의전|모집|구인|급구|구합니다|구해요|찾습니다|필요|가능하신|가능한\s*분|섭외|지원|인원|\d+\s*명|도우미|요원|스태프|스탭|알바|아르바이트|일정\s*(?:공유|안내)|입니다|습니다|어요|에요|예요|해요|세요|니다|드려요/;
+
+// '행사장', '시상식장', '대회의실'처럼 행사 낱말 뒤에 장소 글자가 붙으면 행사가 아니다.
+const isEventToken = (t) => {
+  const m = t.match(EVENT_KW_RE);
+  if (!m) return false;
+  return !/^(?:장|의실|홀|안내|공지|알림|모집|문의)/.test(t.slice(m.index + m[0].length));
+};
+const HEADER_WORDS = /안내|공지|알림|모집|공유|일정|문의|요청/g;
+
+const isRegionToken = (t) => KNOWN_REGIONS.includes(t) || /^[가-힣]{1,}(?:특별자치|특별|광역)?(?:시|구|군|동|읍|면)$/.test(t);
+
+/**
+ * 한 줄에서 행사명을 찾는다. '내일 과천시청에서 제5회 과천시민대상 시상식 의전 있습니다' → '제5회 과천시민대상 시상식'
+ * @returns {{ name: string, bare: boolean } | null} bare: 행사 종류 낱말(+지역)만 있고 고유한 이름이 없음
+ */
+export function findEventName(line, { location = '' } = {}) {
+  let s = String(line || '').replace(/\(\s*[월화수목금토일](?:요일)?\s*\)/g, ' ');
+  // 따옴표·괄호 안에 행사명이 통째로 있으면 그대로 쓴다.
+  for (const q of s.matchAll(/[「『"“‘'<【[]([^」』"”’'>】\]]{2,50})[」』"”’'>】\]]/g)) {
+    const inner = tidy(q[1]);
+    if (isEventToken(inner.replace(/\s+/g, '')) && !POSTING_RE.test(inner) && !/안내|공지|알림|모집/.test(inner)) return withBare(inner);
+  }
+  // 그 밖의 [머리말] 태그는 버린다.
+  s = s.replace(/[[【<「『]([^\]】>」』]*)[\]】>」』]/g, ' ');
+  const tokens = s.split(/\s+/).filter(Boolean);
+  const k0 = tokens.findIndex(isEventToken);
+  if (k0 < 0) return null;
+  // '팝업 행사', '기념식 및 만찬'처럼 이어지는 행사 낱말까지 포함한다.
+  let k = k0;
+  while (k + 1 < tokens.length) {
+    if (isEventToken(tokens[k + 1])) k += 1;
+    else if (/^(?:및|&|겸)$/.test(tokens[k + 1]) && k + 2 < tokens.length && isEventToken(tokens[k + 2])) k += 2;
+    else break;
+  }
+  const last = tokens[k];
+  const m = last.match(EVENT_KW_RE);
+  // 마지막 낱말 뒤에 붙은 조사·글자는 잘라 낸다(시상식에서 → 시상식).
+  const lastWord = last.slice(0, m.index + m[0].length);
+  const parts = [...tokens.slice(k0, k), lastWord];
+  const locWords = new Set(String(location).split(/[\s,()]+/).filter((w) => w.length >= 2));
+  for (let j = k0 - 1, n = 0; j >= 0 && n < 8; j--, n++) {
+    const t = tokens[j].replace(/[!.~]+$/, '');
+    if (!t || NAME_STOP.test(t) || NAME_PARTICLE.test(t) || NAME_PLACE.test(t) || locWords.has(t)) break;
+    if (/\d/.test(t) && !/^(?:제\s*\d+\s*회|\d{4}년?|\d+회|\d+주년|제\d+기)$/.test(t)) break;
+    if (/[~:@/]/.test(t)) break;
+    parts.unshift(t);
+  }
+  while (parts.length && /^(?:및|겸|&|-|·)$/.test(parts[0])) parts.shift();
+  const name = tidy(parts.join(' '));
+  return name ? withBare(name) : null;
+}
+
+function withBare(name) {
+  const rest = name.split(/\s+/).filter((t) => !EVENT_KW_RE.test(t) && !isRegionToken(t) && !/^(?:및|겸|&)$/.test(t));
+  // '과천시민대상시상식'처럼 붙여 쓴 경우도 행사 낱말을 뺀 나머지가 있는지 본다.
+  const glued = name.replace(/\s+/g, '').replace(new RegExp(EVENT_ALT, 'g'), '').replace(HEADER_WORDS, '');
+  const bare = rest.length === 0 && (!glued || isRegionToken(glued) || KNOWN_REGIONS.includes(glued));
+  return { name, bare };
+}
+
+/** 원문에서 '지역 + 하는 일'의 하는 일을 찾는다(시상식·기공식 등, 없으면 의전). */
+export function workWord(raw) {
+  for (const t of String(raw || '').split(/[\s,()[\]/]+/)) {
+    const m = isEventToken(t) && t.match(CEREMONY_RE);
+    if (m) return m[1];
+  }
+  return '의전';
 }
 
 // ── 시간 ────────────────────────────────────────────────
@@ -516,6 +644,8 @@ export function parseSchedule(text, { now = new Date() } = {}) {
   const extraPhones = [];
   const dates = new Set();
   let titleFromLabel = false;
+  let titleLabel = '';
+  let genericTitle = ''; // 라벨 없는 줄에서 얻은 제목 후보(행사명을 못 찾았을 때만 쓴다)
   let typeFromLabel = false;
   let payLines = 0;
   let locationGuessed = false;
@@ -609,6 +739,7 @@ export function parseSchedule(text, { now = new Date() } = {}) {
           else {
             out.title = t;
             titleFromLabel = true;
+            titleLabel = label;
           }
         }
         continue;
@@ -748,8 +879,15 @@ export function parseSchedule(text, { now = new Date() } = {}) {
     const remainder = tidy(rest.replace(/부터|까지|\s~\s|^~|~$/g, ' '));
     if (!remainder || !meaningful(remainder)) continue;
 
-    if (!out.location && ADDRESS_RE.test(remainder) && !/촬영|행사|미팅|오디션/.test(remainder.slice(0, 6))) {
-      out.location = remainder;
+    const evHere = findEventName(remainder);
+    // 행사명이 있는 줄은 원문 전체를 보고 아래에서 제목으로 쓴다.
+    // '과천청소년센터 개소식'처럼 기관명이 행사명 안에 있어도 장소로 떼지 않는다.
+    if (evHere && !evHere.bare) continue;
+    if (!out.location && ADDRESS_RE.test(remainder) && !/촬영|미팅|오디션/.test(remainder.slice(0, 6))) {
+      // '고양 킨텍스 제2전시장 개막식 의전 4명'처럼 행사 낱말이 뒤에 오면 그 앞까지만 장소로 쓴다.
+      const kw = remainder.split(/\s+/).findIndex(isEventToken);
+      const loc = kw > 0 ? remainder.split(/\s+/).slice(0, kw).join(' ') : remainder;
+      out.location = ADDRESS_RE.test(loc) ? loc : remainder;
       locationGuessed = true;
       continue;
     }
@@ -758,10 +896,10 @@ export function parseSchedule(text, { now = new Date() } = {}) {
       agencyGuessed = true;
       continue;
     }
-    if (!out.title) {
+    if (!out.title && !genericTitle && !POSTING_RE.test(remainder) && !/의전/.test(raw) && remainder.length <= 30) {
       const t2 = cleanTitle(remainder);
       if (t2 && meaningful(t2)) {
-        out.title = t2;
+        genericTitle = t2;
         continue;
       }
     }
@@ -775,9 +913,18 @@ export function parseSchedule(text, { now = new Date() } = {}) {
 
   if (!out.date) out.uncertain.date = '날짜를 찾지 못했어요';
   else if (dates.size > 1 && !out.uncertain.date) out.uncertain.date = '여러 날짜가 적혀 있어요. 첫 번째 날짜를 사용했어요';
+  // ── 제목 정하기 ──
+  // 1) '행사명:'처럼 라벨로 적힌 제목  2) 원문 어디든 적힌 행사명(시상식·기공식 등과 그 이름)
+  // 3) 라벨 없는 짧은 줄  4) 지역 + 하는 일(과천의전, 과천기공식)
+  if (!titleFromLabel || titleLabel === '내용') {
+    const ev = findEventInLines(lines, out.location);
+    if (ev) out.title = ev;
+    else if (!out.title && genericTitle && workWord(raw) === '의전') out.title = genericTitle;
+  }
   if (!out.title) {
-    out.title = regionTitle(out.location);
-    out.uncertain.title = '제목을 찾지 못해 장소로 붙였어요';
+    const region = out.location ? regionOf(out.location) : regionInText(raw);
+    out.title = `${region}${workWord(raw)}`;
+    out.uncertain.title = '행사명을 찾지 못해 지역과 하는 일로 붙였어요';
   }
   if (payRule) {
     out.payDate = resolvePayDate(payRule, out.date, today);
@@ -792,6 +939,29 @@ export function parseSchedule(text, { now = new Date() } = {}) {
   if (extraPhones.length) out.uncertain.phone = '연락처가 여러 개 있어요';
 
   return out;
+}
+
+// 행사명을 찾을 때 건너뛰는 라벨(연락처·금액 등에는 행사명이 없다)
+const SKIP_FOR_EVENT = new Set(['contact', 'agency', 'pay', 'payDate', 'tax', 'call', 'location']);
+
+function findEventInLines(lines, location) {
+  for (const line of lines) {
+    if (!line) continue;
+    const m = line.match(LABEL_RE);
+    let value = line;
+    if (m) {
+      const label = (m[1] || m[2]).replace(/\s+/g, '');
+      const field = LABEL_TO_FIELD.get(label) ?? LABEL_TO_FIELD.get(m[1] || m[2]);
+      const strictMiss = m[2] && STRICT_LABELS.has(m[2]) && m[3] && !m[3].trim() && m[4];
+      if (!strictMiss) {
+        if (SKIP_FOR_EVENT.has(field)) continue;
+        value = m[4] || '';
+      }
+    }
+    const ev = findEventName(value, { location });
+    if (ev && !ev.bare) return cleanTitle(ev.name) || ev.name;
+  }
+  return '';
 }
 
 /** 추출된 항목 수(제목 제외) — 결과 요약에 사용 */

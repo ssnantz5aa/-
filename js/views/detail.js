@@ -120,15 +120,25 @@ export function render(root, { id, query } = {}) {
       return;
     }
     const prev = { paid: e.paid, paidAt: e.paidAt };
-    toast(e.paid ? '미입금으로 되돌렸어요' : '입금 완료로 표시했어요', {
+    const base = e.paid ? '미입금으로 되돌렸어요' : '입금 완료로 표시했어요';
+    const undo = {
       kind: 'success',
       action: '실행 취소',
       onAction: () => {
         store.update(e.id, prev);
         render(root, { id, query });
+        syncPay(e.id).then((u) => u?.message && toast(u.message, { kind: u.ok ? 'default' : 'error' }));
       },
-    });
+    };
     render(root, { id, query });
+    if (!isConnected()) {
+      toast(base, undo);
+      return;
+    }
+    syncPay(e.id).then((r) => {
+      // 우리곳간에 못 보냈어도 실행 취소는 남겨 둔다.
+      toast(r?.message ? `${base} · ${r.message}` : base, { ...undo, kind: r && !r.ok ? 'error' : 'success' });
+    });
   });
 
   $('#duplicate', root).addEventListener('click', () => {

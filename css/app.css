@@ -1724,3 +1724,16 @@ body {
   .review-summary, .composer__bar, .compose__tools { flex-wrap: wrap; }
   .action-bar .btn { min-width: 0; padding-left: 10px; padding-right: 10px; }
 }
+
+/* ── 우리곳간 연결 ─────────────────────────────── */
+.setting--stack { flex-direction: column; align-items: stretch; gap: 8px; }
+.key-field { display: flex; gap: 8px; align-items: center; }
+.key-field__input { flex: 1; min-width: 0; height: 44px; font-size: 16px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); font-variant-numeric: tabular-nums; }
+.key-field .btn { height: 44px; flex: none; }
+.setting__help { font-size: 13px; line-height: 1.55; color: var(--ink-3); }
+.ug-chip { display: inline-flex; align-items: center; gap: 3px; min-height: 24px; padding: 3px 8px; border-radius: var(--r); font-size: 11px; background: var(--fill); color: var(--ink-2); white-space: nowrap; }
+.ug-chip--ok { background: var(--success-soft); color: var(--success); }
+.ug-send { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: var(--r); font-size: 11px; color: var(--accent-ink); border: 1px solid var(--line-strong); background: transparent; white-space: nowrap; position: relative; }
+.ug-send::after { content: ''; position: absolute; inset: -10px -4px; }
+.ug-send:disabled { opacity: .55; }
+.pay-row__ug { grid-column: 2 / 4; margin-top: 2px; }
