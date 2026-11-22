@@ -1748,3 +1748,20 @@ body {
 .swipe.is-swiping .swipe__del, .swipe.is-open .swipe__del { visibility: visible; }
 .swipe.is-removing { opacity: 0; transform: translateX(-24px); transition: opacity 200ms var(--ease), transform 200ms var(--ease); }
 @media (prefers-reduced-motion: reduce) { .swipe.is-removing { transition: none; } }
+
+/* ── 받음(남색) / 안 받음(파랑) ─────────────────── */
+:root { --pay-paid: #1f2f6e; --pay-unpaid: #2f7be0; }
+@media (prefers-color-scheme: dark) { :root { --pay-paid: #8ea2ec; --pay-unpaid: #5fb0ff; } }
+[data-pay="paid"] { --c: var(--pay-paid); }
+[data-pay="unpaid"] { --c: var(--pay-unpaid); }
+.event-row[data-pay] { border-left-color: var(--c); }
+
+/* ── 캘린더: 이번 달 총 번 돈 ─────────────────── */
+.earn { margin: 14px 0 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.earn__main { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.earn__label { font-size: 13px; color: var(--ink-3); }
+.earn__amount { font-family: var(--font-title); font-size: 24px; letter-spacing: -.03em; color: var(--ink); }
+.earn__split { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 13px; color: var(--ink-2); }
+.earn__part { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.earn__part i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.earn__part small { color: var(--ink-3); font-size: 12px; }
