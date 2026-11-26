@@ -70,7 +70,7 @@ section { display: flex; flex-direction: column; gap: 16px; }
 
 /* rooms */
 .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
-.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 1px; margin-right: 6px; vertical-align: -1px; }
 .rooms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .room.big { grid-column: 1 / -1; }
 .room { background: var(--paper); border: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -83,8 +83,8 @@ section { display: flex; flex-direction: column; gap: 16px; }
 .dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
 .kit { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px; border-top: 1px solid var(--line); padding-top: 12px; }
 .tool { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--ink); text-align: center; position: relative; }
-.tool svg { width: 30px; height: 30px; padding: 4px; border: 1.5px solid var(--ink); border-radius: 50%; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.tool.ask svg { border-style: dashed; border-color: var(--alert); stroke: var(--alert); }
+.tool svg { width: 28px; height: 28px; padding: 2px; border: 0; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tool.ask svg { stroke: var(--alert); }
 .tool.ask { color: var(--alert); }
 .note { font-size: 13px; color: var(--muted); margin: 0; }
 
@@ -114,12 +114,21 @@ th { color: var(--muted); font-weight: 500; }
 td:first-child, th:first-child { text-align: left; }
 .tbl { padding: 0 16px 14px; }
 
+.tbl-wrap { background: var(--paper); border: 1px solid var(--line); }
+table.att { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 14px; }
+.att th { background: var(--faint); color: var(--ink); font-weight: 700; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+.att td { padding: 8px 10px; border-top: 1px solid var(--faint); text-align: center; }
+.att td:first-child { font-weight: 700; text-align: left; }
+.att td.dim { color: var(--muted); font-size: 13px; }
+.att td.sum { font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
+.att tr.total td { border-top: 2px solid var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+
 /* deadlines */
 .steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; position: relative; }
 .step { display: flex; flex-direction: column; gap: 8px; padding-right: 12px; position: relative; min-width: 0; }
 .step::before { content: ""; height: 3px; background: var(--ink); display: block; margin-right: -12px; }
 .step:last-child::before { margin-right: 0; }
-.step .pin { position: absolute; top: -6px; left: 0; width: 15px; height: 15px; border-radius: 50%; background: var(--paper); border: 3px solid var(--ink); }
+.step .pin { position: absolute; top: -6px; left: 0; width: 13px; height: 13px; background: var(--paper); border: 3px solid var(--ink); }
 .step.now .pin { background: var(--alert); border-color: var(--alert); }
 .step b { font-family: var(--display); font-size: 17px; margin-top: 8px; }
 .step ul { margin: 0; padding-left: 16px; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
@@ -202,24 +211,19 @@ td:first-child, th:first-child { text-align: left; }
   </section>
 
   <section>
-    <h2>지파별 참석 <small>점 1개 = 1명, 색 = 들어가는 과별 모임</small></h2>
-    <div class="legend" id="legend2"></div>
-    <div class="tribes" id="tribes"></div>
+    <h2>지파별 참석 <small>총 53명</small></h2>
+    <div class="tbl-wrap scroll">
+      <table class="att">
+        <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th><th>계</th></tr></thead>
+        <tbody id="names"></tbody>
+      </table>
+    </div>
     <div class="flags">
       <div class="flag"><b>과별 모임 50명</b>총 53명 중 3명은 전체 모임만 참석</div>
       <div class="flag"><b>총회</b>기획과장은 과별 모임 없음</div>
       <div class="flag"><b>목선 모임</b>빌립·마태·도마·안드레·맛디아·서울야고보 총무는 목선 모임 참석</div>
       <div class="flag"><b>요한</b>목선과장/통번역과장은 전체 모임만, 재정과장은 과별 모임 없음</div>
     </div>
-    <details>
-      <summary>이름으로 보기</summary>
-      <div class="tbl scroll">
-        <table>
-          <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th></tr></thead>
-          <tbody id="names"></tbody>
-        </table>
-      </div>
-    </details>
   </section>
 
   <section>
@@ -282,7 +286,6 @@ document.getElementById('rooms').innerHTML = rooms.map(r => {
   return `<article class="room ${r.big ? 'big' : ''}">
     <div class="top"><h3>${r.name}</h3><div class="cnt num">${r.cnt}<small>명</small></div></div>
     <div class="who">${r.who}${r.extra ? ' · ' + r.extra : ''}</div>
-    <div class="dots">${r.mix.map(([n, g]) => dots(n, G[g].color)).join('')}</div>
     <div class="kit">${kit}</div>
   </article>`;
 }).join('');
@@ -293,16 +296,6 @@ const tribes = [
   ['안드레', 1, 1, 1, 0, 0], ['다대오', 1, 1, 1, 1, 0], ['빌립', 1, 1, 1, 0, 0], ['시몬', 1, 1, 0, 1, 0],
   ['바돌로매', 1, 1, 1, 1, 0], ['마태', 1, 1, 1, 1, 0], ['맛디아', 1, 1, 1, 1, 0], ['서울야고보', 1, 1, 1, 1, 0], ['도마', 1, 1, 1, 0, 0],
 ];
-const keys = ['g1', 'g2', 'g3', 'g4', 'g0'];
-const tot = [0, 0, 0, 0, 0];
-let th = tribes.map(t => {
-  const n = t.slice(1).reduce((a, b) => a + b, 0);
-  t.slice(1).forEach((v, i) => tot[i] += v);
-  return `<div class="trow"><div class="tn">${t[0]}</div><div class="dots">${t.slice(1).map((v, i) => dots(v, G[keys[i]].color)).join('')}</div><div class="tc">${n}</div></div>`;
-}).join('');
-th += `<div class="trow total"><div class="tn">합계</div><div class="note num">부장·총무 ${tot[0]} · 서무 ${tot[1]} · 목선 ${tot[2]} · 통번역 ${tot[3]} · 전체만 ${tot[4]}</div><div class="tc">${tot.reduce((a, b) => a + b, 0)}</div></div>`;
-document.getElementById('tribes').innerHTML = th;
-document.getElementById('legend2').innerHTML = legend(keys);
 
 const names = [
   ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주'],
@@ -319,7 +312,9 @@ const names = [
   ['서울야고보', '김대중', '목선 모임', '박춘연', '김영희(총무)', '장춘화'],
   ['도마', '이상대', '목선 모임', '강하니', '박재경(총무)', '불참'],
 ];
-document.getElementById('names').innerHTML = names.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+const cnt = Object.fromEntries(tribes.map(t => [t[0], t.slice(1).reduce((a, b) => a + b, 0)]));
+document.getElementById('names').innerHTML = names.map(r => `<tr>${r.map(c => `<td class="${/불참|전체 모임만|목선 모임|지도방문/.test(c) ? 'dim' : ''}">${c}</td>`).join('')}<td class="sum">${cnt[r[0]]}</td></tr>`).join('')
+  + `<tr class="total"><td>합계</td><td>12</td><td>4</td><td>13</td><td>11</td><td>10</td><td class="sum">53</td></tr>`;
 
 // deadlines
 const steps = [
