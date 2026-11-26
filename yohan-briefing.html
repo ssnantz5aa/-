@@ -1,0 +1,335 @@
+<title>12지파 워크숍 요한지파 브리핑</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column; each section is a picture first (timeline, room cards, dot chart), words second */
+:root {
+  --bg: #f6f6f4;
+  --paper: #ffffff;
+  --ink: #1f1f1d;
+  --muted: #6b6b66;
+  --line: #dcdcd6;
+  --faint: #e9e9e4;
+  --g1: #3a3a37;   /* 부장·총무 */
+  --g2: #a07a3c;   /* 서무 */
+  --g3: #5d7d5b;   /* 목회자선교과 */
+  --g4: #a0503f;   /* 통번역과 */
+  --g0: #b9b9b2;   /* 전체 모임만 */
+  --meal: #d8d3c6;
+  --alert: #a0503f;
+  --display: "IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
+  --body: "Noto Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171716; --paper: #20201e; --ink: #ecece7; --muted: #a3a39c; --line: #3a3a37; --faint: #2b2b29;
+    --g1: #c9c9c2; --g2: #d2a868; --g3: #8fb48b; --g4: #dd8a76; --g0: #5d5d58; --meal: #4a463d; --alert: #e39582;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171716; --paper: #20201e; --ink: #ecece7; --muted: #a3a39c; --line: #3a3a37; --faint: #2b2b29;
+  --g1: #c9c9c2; --g2: #d2a868; --g3: #8fb48b; --g4: #dd8a76; --g0: #5d5d58; --meal: #4a463d; --alert: #e39582;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(24px, 4.4vw, 34px); line-height: 1.25; }
+h2 { font-size: 20px; display: flex; align-items: baseline; gap: 10px; }
+h2 small { font-family: var(--body); font-size: 13px; font-weight: 400; color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 16px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* header */
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.fact { background: var(--paper); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.fact span { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.fact b { font-family: var(--display); font-size: 20px; }
+.head { display: flex; flex-direction: column; gap: 14px; }
+.head p { margin: 0; color: var(--muted); }
+
+/* timeline */
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.gantt { min-width: 720px; display: grid; grid-template-columns: 150px 1fr; row-gap: 8px; }
+.gantt .lab { font-size: 13px; font-weight: 700; display: flex; flex-direction: column; justify-content: center; padding-right: 10px; }
+.gantt .lab em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 12px; }
+.lane { position: relative; height: 44px; background: var(--faint); }
+.blk { position: absolute; top: 0; bottom: 0; color: #fff; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; padding: 0 4px; overflow: hidden; border-right: 2px solid var(--bg); }
+.blk.meal { color: var(--ink); }
+.axis { position: relative; height: 22px; }
+.axis span { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--muted); }
+.axis span:first-child { transform: none; }
+.axis span:last-child { transform: translateX(-100%); }
+
+/* rooms */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.rooms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.room.big { grid-column: 1 / -1; }
+.room { background: var(--paper); border: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.room .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.room h3 { margin: 0; font-family: var(--display); font-size: 16px; }
+.room .cnt { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; }
+.room .cnt small { font-size: 13px; font-weight: 500; margin-left: 2px; }
+.room .who { font-size: 13px; color: var(--muted); margin-top: -6px; }
+.dots { display: flex; flex-wrap: wrap; gap: 3px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+.kit { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px; border-top: 1px solid var(--line); padding-top: 12px; }
+.tool { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--ink); text-align: center; position: relative; }
+.tool svg { width: 30px; height: 30px; padding: 4px; border: 1.5px solid var(--ink); border-radius: 50%; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tool.ask svg { border-style: dashed; border-color: var(--alert); stroke: var(--alert); }
+.tool.ask { color: var(--alert); }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* common prep */
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.chip { background: var(--paper); border: 1px solid var(--line); padding: 12px; display: flex; gap: 10px; align-items: center; font-size: 13.5px; min-width: 0; }
+.chip svg { flex: none; width: 26px; height: 26px; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* tribes */
+.tribes { background: var(--paper); border: 1px solid var(--line); padding: 8px 16px; }
+.trow { display: grid; grid-template-columns: 96px 1fr 34px; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--faint); }
+.trow:last-child { border-bottom: 0; }
+.trow .tn { font-size: 14px; font-weight: 500; }
+.trow .tc { text-align: right; font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
+.trow .dots i { width: 16px; height: 16px; }
+.trow.total { border-top: 2px solid var(--ink); }
+.trow.total .tn, .trow.total .tc { font-weight: 700; }
+.flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.flag { border-left: 3px solid var(--g0); background: var(--paper); padding: 10px 14px; font-size: 13.5px; }
+.flag b { display: block; font-family: var(--display); }
+details { background: var(--paper); border: 1px solid var(--line); }
+summary { cursor: pointer; padding: 12px 16px; font-weight: 700; font-size: 14px; }
+summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13px; }
+th, td { border-top: 1px solid var(--line); padding: 7px 10px; text-align: center; }
+th { color: var(--muted); font-weight: 500; }
+td:first-child, th:first-child { text-align: left; }
+.tbl { padding: 0 16px 14px; }
+
+/* deadlines */
+.steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; position: relative; }
+.step { display: flex; flex-direction: column; gap: 8px; padding-right: 12px; position: relative; min-width: 0; }
+.step::before { content: ""; height: 3px; background: var(--ink); display: block; margin-right: -12px; }
+.step:last-child::before { margin-right: 0; }
+.step .pin { position: absolute; top: -6px; left: 0; width: 15px; height: 15px; border-radius: 50%; background: var(--paper); border: 3px solid var(--ink); }
+.step.now .pin { background: var(--alert); border-color: var(--alert); }
+.step b { font-family: var(--display); font-size: 17px; margin-top: 8px; }
+.step ul { margin: 0; padding-left: 16px; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+
+@media (max-width: 720px) {
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rooms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .steps { grid-template-columns: 1fr; gap: 0; }
+  .step { padding: 0 0 18px 26px; }
+  .step::before { position: absolute; left: 6px; top: 0; bottom: 0; width: 3px; height: auto; margin: 0; }
+  .step:last-child::before { bottom: auto; height: 14px; }
+  .step .pin { top: 2px; left: 0; }
+  .step b { margin-top: 0; }
+  .trow { grid-template-columns: 78px 1fr 28px; }
+  .trow .dots i { width: 13px; height: 13px; }
+}
+@media (max-width: 420px) { .rooms { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-desk" viewBox="0 0 24 24"><path d="M3 9h18M5 9v10M19 9v10M8 13h8"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/></symbol>
+  <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12"/><path d="M8 20l4-4 4 4M14 8l-5 5"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M9 21h6M12 17v4"/></symbol>
+  <symbol id="i-rec" viewBox="0 0 24 24"><rect x="2" y="7" width="14" height="11" rx="2"/><path d="M16 11l6-3v9l-6-3"/><circle cx="7" cy="12.5" r="1.5"/></symbol>
+  <symbol id="i-banner" viewBox="0 0 24 24"><path d="M3 5h18M5 5v9h14V5M8 9h8M7 14l-2 5M17 14l2 5"/></symbol>
+  <symbol id="i-plate" viewBox="0 0 24 24"><path d="M4 18L9 6h6l5 12zM4 18h16M10 12h4"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 8V5h6v3"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="10" rx="1"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></symbol>
+  <symbol id="i-heat" viewBox="0 0 24 24"><path d="M8 20c-2-3 2-5 0-8s2-5 0-8M13 20c-2-3 2-5 0-8s2-5 0-8M18 20c-2-3 2-5 0-8s2-5 0-8"/></symbol>
+  <symbol id="i-meal" viewBox="0 0 24 24"><path d="M6 3v8a2 2 0 0 0 4 0V3M8 11v10M17 3c-2 0-3 3-3 7h3v11"/></symbol>
+  <symbol id="i-cup" viewBox="0 0 24 24"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="M5 16h14M3 16v-4l2-5h14l2 5v4h-2M5 16H3M7 19a1.5 1.5 0 1 0 0-.1M17 19a1.5 1.5 0 1 0 0-.1"/></symbol>
+</svg>
+
+<main class="wrap">
+
+  <header class="head">
+    <h1>12지파 해외선교부 워크숍<br>요한지파 준비 브리핑</h1>
+    <div class="facts">
+      <div class="fact"><span>일시</span><b class="num">12. 10.(목)</b></div>
+      <div class="fact"><span>시간</span><b class="num">10:30 – 16:30</b></div>
+      <div class="fact"><span>장소</span><b>평택교회</b></div>
+      <div class="fact"><span>인원 · 복장</span><b>53명 · 세미정장</b></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>하루 흐름 <small>어느 시간에 어느 공간을 몇 명이 쓰는지</small></h2>
+    <div class="scroll">
+      <div class="gantt" id="gantt"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section>
+    <h2>공간별 준비 <small>진한 아이콘 = 준비, 점선 = 가능 여부 보고</small></h2>
+    <div class="rooms" id="rooms"></div>
+    <p class="note">책상과 의자는 모든 공간에 배치하고, 어려우면 좌식책상으로 대체합니다.</p>
+  </section>
+
+  <section>
+    <h2>공통 준비</h2>
+    <div class="chips">
+      <div class="chip"><svg><use href="#i-bag"/></svg>짐(외투) 보관 장소</div>
+      <div class="chip"><svg><use href="#i-sound"/></svg>음향 담당 상주 또는 사용법 안내</div>
+      <div class="chip"><svg><use href="#i-laptop"/></svg>노트북 연결·소리 출력 확인</div>
+      <div class="chip"><svg><use href="#i-wifi"/></svg>와이파이 정보, 멀티탭</div>
+      <div class="chip"><svg><use href="#i-heat"/></svg>09:00 전 난방 가동</div>
+      <div class="chip"><svg><use href="#i-rec"/></svg>녹화 장비·담당자</div>
+      <div class="chip"><svg><use href="#i-banner"/></svg>현수막 설치 (문구는 총회)</div>
+      <div class="chip"><svg><use href="#i-plate"/></svg>공간 1 명패·좌석 배치 (명단은 총회)</div>
+      <div class="chip"><svg><use href="#i-meal"/></svg>점심 장소 결정, 외부면 1인 금액</div>
+      <div class="chip"><svg><use href="#i-cup"/></svg>다과 준비, 예상 비용 산출</div>
+      <div class="chip"><svg><use href="#i-car"/></svg>주차 대수, 주소·교통편</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>지파별 참석 <small>점 1개 = 1명, 색 = 들어가는 과별 모임</small></h2>
+    <div class="legend" id="legend2"></div>
+    <div class="tribes" id="tribes"></div>
+    <div class="flags">
+      <div class="flag"><b>과별 모임 50명</b>총 53명 중 3명은 전체 모임만 참석</div>
+      <div class="flag"><b>총회</b>기획과장은 과별 모임 없음</div>
+      <div class="flag"><b>요한</b>목선과장/통번역과장은 전체 모임만, 재정과장은 과별 모임 없음</div>
+    </div>
+    <details>
+      <summary>이름으로 보기</summary>
+      <div class="tbl scroll">
+        <table>
+          <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th></tr></thead>
+          <tbody id="names"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section>
+    <h2>보고 일정</h2>
+    <div class="steps" id="steps"></div>
+  </section>
+
+</main>
+
+<script>
+const G = {
+  g1: { name: '부장·총무', color: 'var(--g1)' },
+  g2: { name: '서무', color: 'var(--g2)' },
+  g3: { name: '목회자선교과', color: 'var(--g3)' },
+  g4: { name: '통번역과', color: 'var(--g4)' },
+  g0: { name: '전체 모임만', color: 'var(--g0)' },
+};
+const legend = keys => keys.map(k => `<span><i style="background:${G[k].color}"></i>${G[k].name}</span>`).join('');
+const dots = (n, color) => Array.from({ length: n }, () => `<i style="background:${color}"></i>`).join('');
+
+// timeline: 10:30 -> 16:30
+const T0 = 630, SPAN = 360;
+const m = s => { const [h, mm] = s.split(':').map(Number); return h * 60 + mm; };
+const pos = s => ((m(s) - T0) / SPAN * 100).toFixed(3) + '%';
+const lanes = [
+  { lab: '전체 모임 장소', sub: '53명', blocks: [['10:30', '12:00', 'var(--g1)', '전체 모임 53명'], ['16:20', '16:30', 'var(--g1)', '']] },
+  { lab: '점심', sub: '교회 내 또는 외부', blocks: [['12:00', '13:00', 'var(--meal)', '식사', 'meal']] },
+  { lab: '공간 1', sub: '최대 32명', blocks: [['13:00', '14:30', 'linear-gradient(90deg,var(--g1) 59%,var(--g2) 59%)', '부장·총무·서무 32'], ['14:30', '16:20', 'var(--g1)', '부장·총무 19']] },
+  { lab: '공간 2', sub: '13명', blocks: [['14:30', '16:20', 'var(--g2)', '서무 13']] },
+  { lab: '공간 3', sub: '8명', blocks: [['13:00', '16:20', 'var(--g3)', '목회자선교과 8']] },
+  { lab: '공간 4', sub: '10명', blocks: [['13:00', '16:20', 'var(--g4)', '통번역과 10']] },
+];
+let gh = '';
+for (const l of lanes) {
+  gh += `<div class="lab">${l.lab}<em>${l.sub}</em></div><div class="lane">`;
+  for (const [a, b, bg, txt, cls] of l.blocks) {
+    gh += `<div class="blk ${cls || ''}" style="left:${pos(a)};width:calc(${pos(b)} - ${pos(a)});background:${bg}" title="${a}–${b}">${txt}</div>`;
+  }
+  gh += `</div>`;
+}
+gh += `<div></div><div class="axis num">${['10:30', '12:00', '13:00', '14:30', '16:20', '16:30'].map((t, i, arr) => `<span style="left:${pos(t)}">${i === arr.length - 2 ? '' : t}</span>`).join('')}</div>`;
+gh += `<div></div><div class="note">13:00–14:30 과별 1부 · 14:30–16:20 과별 2부 · 16:20 마무리</div>`;
+document.getElementById('gantt').innerHTML = gh;
+document.getElementById('legend').innerHTML = legend(['g1', 'g2', 'g3', 'g4']);
+
+// rooms
+const TOOLS = [['desk', '책상·의자'], ['mic', '마이크'], ['board', '전자칠판'], ['tv', 'TV'], ['rec', '녹화'], ['banner', '현수막'], ['plate', '명패']];
+const rooms = [
+  { name: '전체 모임 장소', big: true, who: '10:30–12:00 · 16:20–16:30', cnt: 53, mix: [[19, 'g1'], [13, 'g2'], [8, 'g3'], [10, 'g4'], [3, 'g0']], need: { desk: 1, mic: 1, board: 1, rec: 1, banner: 1 } },
+  { name: '공간 1', who: '부장·총무 (1부는 서무 포함)', cnt: 32, extra: '2부 19명', mix: [[19, 'g1'], [13, 'g2']], need: { desk: 1, mic: 1, tv: 'ask', plate: 1 } },
+  { name: '공간 2', who: '서무 · 2부만', cnt: 13, mix: [[13, 'g2']], need: { desk: 1, tv: 'ask' } },
+  { name: '공간 3', who: '목회자선교과', cnt: 8, mix: [[8, 'g3']], need: { desk: 1 } },
+  { name: '공간 4', who: '통번역과', cnt: 10, mix: [[10, 'g4']], need: { desk: 1, tv: 'ask' } },
+];
+document.getElementById('rooms').innerHTML = rooms.map(r => {
+  const kit = TOOLS.filter(([k]) => r.need[k]).map(([k, label]) => {
+    const ask = r.need[k] === 'ask';
+    return `<div class="tool ${ask ? 'ask' : ''}"><svg><use href="#i-${k}"/></svg>${label}${ask ? '?' : ''}</div>`;
+  }).join('');
+  return `<article class="room ${r.big ? 'big' : ''}">
+    <div class="top"><h3>${r.name}</h3><div class="cnt num">${r.cnt}<small>명</small></div></div>
+    <div class="who">${r.who}${r.extra ? ' · ' + r.extra : ''}</div>
+    <div class="dots">${r.mix.map(([n, g]) => dots(n, G[g].color)).join('')}</div>
+    <div class="kit">${kit}</div>
+  </article>`;
+}).join('');
+
+// tribes: [name, 부총, 서무, 목선, 통번역, 전체만]
+const tribes = [
+  ['총회', 1, 1, 1, 2, 1], ['요한', 2, 1, 0, 0, 2], ['베드로', 2, 1, 1, 1, 0], ['부산야고보', 2, 1, 1, 1, 0],
+  ['안드레', 2, 1, 0, 0, 0], ['다대오', 1, 1, 1, 1, 0], ['빌립', 1, 1, 1, 0, 0], ['시몬', 1, 1, 0, 1, 0],
+  ['바돌로매', 1, 1, 1, 1, 0], ['마태', 1, 1, 1, 1, 0], ['맛디아', 2, 1, 0, 1, 0], ['서울야고보', 2, 1, 0, 1, 0], ['도마', 1, 1, 1, 0, 0],
+];
+const keys = ['g1', 'g2', 'g3', 'g4', 'g0'];
+const tot = [0, 0, 0, 0, 0];
+let th = tribes.map(t => {
+  const n = t.slice(1).reduce((a, b) => a + b, 0);
+  t.slice(1).forEach((v, i) => tot[i] += v);
+  return `<div class="trow"><div class="tn">${t[0]}</div><div class="dots">${t.slice(1).map((v, i) => dots(v, G[keys[i]].color)).join('')}</div><div class="tc">${n}</div></div>`;
+}).join('');
+th += `<div class="trow total"><div class="tn">합계</div><div class="note num">부장·총무 ${tot[0]} · 서무 ${tot[1]} · 목선 ${tot[2]} · 통번역 ${tot[3]} · 전체만 ${tot[4]}</div><div class="tc">${tot.reduce((a, b) => a + b, 0)}</div></div>`;
+document.getElementById('tribes').innerHTML = th;
+document.getElementById('legend2').innerHTML = legend(keys);
+
+const names = [
+  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주'],
+  ['요한', '홍혜정', '전윤정', '류기원', '전체 모임만', '전체 모임만'],
+  ['베드로', '민경', '김종대', '정혜련', '김경렬', '박선영'],
+  ['부산야고보', '김현지', '홍미란', '조석현', '김종훈', '강동균'],
+  ['안드레', '이재인', '박선경', '허보윤', '불참', '불참'],
+  ['다대오', '오채린', '불참', '송현아', '홍진영', '박지수'],
+  ['빌립', '김경환', '목선 모임', '이세은', '이건호(총무)', '불참'],
+  ['시몬', '김민주', '불참', '김지원', '불참', '김지현'],
+  ['바돌로매', '지도방문', '정효영', '유태현', '김다은', '박선하'],
+  ['마태', '이정미', '목선 모임', '이선아', '주예현(총무)', '김규리'],
+  ['맛디아', '박종열', '최원석', '김명옥', '불참', '성예은'],
+  ['서울야고보', '김대중', '김영희', '박춘연', '불참', '장춘화'],
+  ['도마', '이상대', '목선 모임', '강하니', '박재경(총무)', '불참'],
+];
+document.getElementById('names').innerHTML = names.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+
+// deadlines
+const steps = [
+  ['11/27(금)', ['공간 위치(층·호실)', 'TV 가능 여부', '점심 장소·금액', '다과 비용', '주차·주소'], true],
+  ['12/4(금)', ['녹화 장비·담당', '현수막 설치 방법', '음향 담당 상주']],
+  ['12/8(화)', ['전자칠판 파일 실행 확인']],
+  ['12/9(수)', ['셋팅 완료 사진']],
+  ['12/10(목)', ['08:30 출입', '09:30 장비 점검']],
+  ['행사 후', ['원상복구', '다과비 정산']],
+];
+document.getElementById('steps').innerHTML = steps.map(([d, items, now]) =>
+  `<div class="step ${now ? 'now' : ''}"><span class="pin"></span><b class="num">${d}</b><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`
+).join('');
+</script>
