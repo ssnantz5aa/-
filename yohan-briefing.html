@@ -277,9 +277,9 @@ const leaderRows = [
 const clerks = [['총회', '이연희'], ['요한', '류기원'], ['베드로', '정혜련'], ['부산야고보', '조석현'], ['안드레', '허보윤'], ['다대오', '송현아'], ['빌립', '이세은'], ['시몬', '김지원'], ['바돌로매', '유태현'], ['마태', '이선아'], ['맛디아', '김명옥'], ['서울야고보', '박춘연'], ['도마', '강하니']];
 const pastoral = [['총회', '이수진'], ['베드로', '김경렬'], ['부산야고보', '김종훈'], ['안드레 총무', '박선경'], ['다대오', '홍진영'], ['빌립 총무', '이건호'], ['바돌로매', '김다은'], ['마태 총무', '주예현'], ['맛디아 총무', '최원석'], ['서울야고보 총무', '김영희'], ['도마 총무', '박재경']];
 const interp = [['총회', '김꽃별'], ['총회 서기', '이연주'], ['베드로', '박선영'], ['부산야고보', '강동균'], ['다대오', '박지수'], ['시몬', '김지현'], ['바돌로매', '박선하'], ['마태', '김규리'], ['맛디아', '성예은'], ['서울야고보', '장춘화']];
-const box = (c, title, tag, n, body, wide) => `<article class="box ${wide ? 'wide' : ''}" style="--c:${c}"><header><div><h3>${title}</h3><span>${tag}</span></div><b>${n}명</b></header><div class="body">${body}</div></article>`;
+const box = (c, title, tag, n, body, wide) => `<article class="box ${wide ? 'wide' : ''}" style="--c:${c}"><header><div><h3>${title}</h3><span>${tag}</span></div><b>${typeof n === 'number' ? n + '명' : n}</b></header><div class="body">${body}</div></article>`;
 document.getElementById('rosters').innerHTML = [
-  box('var(--g1)', '공간 1 · 부장·총무·서무 모임', '1부 31명 → 2부 18명', 18,
+  box('var(--g1)', '공간 1 · 부장·총무·서무 모임', '1부 13:00–14:30 → 2부 14:30–16:20', '31명 → 18명',
     `<div class="sub">부장·총무 18<span>1부·2부 모두</span></div>
      <div class="rows">${leaderRows.map(r => grid(r)).join('')}</div>
      <div class="sub">서무 13<span>1부만 참석, 2부는 공간 2로 이동</span></div>
