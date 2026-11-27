@@ -2,20 +2,19 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
-/* Layout: one reading column; each section is a picture first (timeline, room cards, dot chart), words second */
+/* Layout: one reading column; a time-by-room grid first, then room rosters in boxes, then lists */
 :root {
   --bg: #f6f6f4;
   --paper: #ffffff;
   --ink: #1f1f1d;
   --muted: #6b6b66;
-  --line: #dcdcd6;
-  --faint: #e9e9e4;
+  --line: #d6d6d0;
+  --faint: #ecece7;
   --g1: #3a3a37;   /* 부장·총무 */
   --g2: #a07a3c;   /* 서무 */
   --g3: #5d7d5b;   /* 목회자선교과 */
   --g4: #a0503f;   /* 통번역과 */
-  --g0: #b9b9b2;   /* 전체 모임만 */
-  --meal: #d8d3c6;
+  --g0: #8f8f88;   /* 전체 */
   --alert: #a0503f;
   --display: "IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
   --body: "Noto Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
@@ -23,13 +22,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #171716; --paper: #20201e; --ink: #ecece7; --muted: #a3a39c; --line: #3a3a37; --faint: #2b2b29;
-    --g1: #c9c9c2; --g2: #d2a868; --g3: #8fb48b; --g4: #dd8a76; --g0: #5d5d58; --meal: #4a463d; --alert: #e39582;
+    --g1: #c9c9c2; --g2: #d2a868; --g3: #8fb48b; --g4: #dd8a76; --g0: #8a8a84; --alert: #e39582;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #171716; --paper: #20201e; --ink: #ecece7; --muted: #a3a39c; --line: #3a3a37; --faint: #2b2b29;
-  --g1: #c9c9c2; --g2: #d2a868; --g3: #8fb48b; --g4: #dd8a76; --g0: #5d5d58; --meal: #4a463d; --alert: #e39582;
+  --g1: #c9c9c2; --g2: #d2a868; --g3: #8fb48b; --g4: #dd8a76; --g0: #8a8a84; --alert: #e39582;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -40,113 +39,98 @@ body {
   padding-block: 28px 56px;
 }
 .wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
-h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
 h1 { font-size: clamp(24px, 4.4vw, 34px); line-height: 1.25; }
-h2 { font-size: 20px; display: flex; align-items: baseline; gap: 10px; }
+h2 { font-size: 20px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 h2 small { font-family: var(--body); font-size: 13px; font-weight: 400; color: var(--muted); }
-section { display: flex; flex-direction: column; gap: 16px; }
+section { display: flex; flex-direction: column; gap: 14px; }
 .num { font-variant-numeric: tabular-nums; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
 
 /* header */
+.head { display: flex; flex-direction: column; gap: 14px; }
 .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
 .fact { background: var(--paper); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
 .fact span { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
 .fact b { font-family: var(--display); font-size: 20px; }
-.head { display: flex; flex-direction: column; gap: 14px; }
-.head p { margin: 0; color: var(--muted); }
 
-/* timeline */
+/* tables */
 .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.gantt { min-width: 720px; display: grid; grid-template-columns: 150px 1fr; row-gap: 8px; }
-.gantt .lab { font-size: 13px; font-weight: 700; display: flex; flex-direction: column; justify-content: center; padding-right: 10px; }
-.gantt .lab em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 12px; }
-.lane { position: relative; height: 44px; background: var(--faint); }
-.blk { position: absolute; top: 0; bottom: 0; color: #fff; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; padding: 0 4px; overflow: hidden; border-right: 2px solid var(--bg); }
-.blk.meal { color: var(--ink); }
-.axis { position: relative; height: 22px; }
-.axis span { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--muted); }
-.axis span:first-child { transform: none; }
-.axis span:last-child { transform: translateX(-100%); }
-
-/* rooms */
-.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
-.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 1px; margin-right: 6px; vertical-align: -1px; }
-.rooms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.room.big { grid-column: 1 / -1; }
-.room { background: var(--paper); border: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.room .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.room h3 { margin: 0; font-family: var(--display); font-size: 16px; }
-.room .cnt { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; }
-.room .cnt small { font-size: 13px; font-weight: 500; margin-left: 2px; }
-.room .who { font-size: 13px; color: var(--muted); margin-top: -6px; }
-.dots { display: flex; flex-wrap: wrap; gap: 3px; }
-.dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
-.kit { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px; border-top: 1px solid var(--line); padding-top: 12px; }
-.tool { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--ink); text-align: center; position: relative; }
-.tool svg { width: 28px; height: 28px; padding: 2px; border: 0; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.tool.ask svg { stroke: var(--alert); }
-.tool.ask { color: var(--alert); }
-.note { font-size: 13px; color: var(--muted); margin: 0; }
-
-/* common prep */
-.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-.chip { background: var(--paper); border: 1px solid var(--line); padding: 12px; display: flex; gap: 10px; align-items: center; font-size: 13.5px; min-width: 0; }
-.chip svg { flex: none; width: 26px; height: 26px; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-
-/* tribes */
-.tribes { background: var(--paper); border: 1px solid var(--line); padding: 8px 16px; }
-.trow { display: grid; grid-template-columns: 96px 1fr 34px; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--faint); }
-.trow:last-child { border-bottom: 0; }
-.trow .tn { font-size: 14px; font-weight: 500; }
-.trow .tc { text-align: right; font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
-.trow .dots i { width: 16px; height: 16px; }
-.trow.total { border-top: 2px solid var(--ink); }
-.trow.total .tn, .trow.total .tc { font-weight: 700; }
-.flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-.flag { border-left: 3px solid var(--g0); background: var(--paper); padding: 10px 14px; font-size: 13.5px; }
-.flag b { display: block; font-family: var(--display); }
-details { background: var(--paper); border: 1px solid var(--line); }
-summary { cursor: pointer; padding: 12px 16px; font-weight: 700; font-size: 14px; }
-summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13px; }
-th, td { border-top: 1px solid var(--line); padding: 7px 10px; text-align: center; }
-th { color: var(--muted); font-weight: 500; }
-td:first-child, th:first-child { text-align: left; }
-.tbl { padding: 0 16px 14px; }
-
 .tbl-wrap { background: var(--paper); border: 1px solid var(--line); }
-table.att { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 14px; }
-.att th { background: var(--faint); color: var(--ink); font-weight: 700; padding: 9px 10px; border-bottom: 1px solid var(--line); }
-.att td { padding: 8px 10px; border-top: 1px solid var(--faint); text-align: center; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 9px 10px; text-align: center; vertical-align: middle; }
+thead th { background: var(--faint); font-weight: 700; border-bottom: 1px solid var(--line); }
+tbody td, tbody th { border-top: 1px solid var(--faint); }
+tbody th { text-align: left; font-weight: 700; white-space: nowrap; }
+tbody th small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+tr.split td, tr.split th { border-top: 2px solid var(--ink); }
+
+/* plan grid */
+table.plan { min-width: 720px; table-layout: fixed; }
+.plan .occ { font-weight: 700; color: var(--ink); text-align: left; padding-left: 12px; box-shadow: inset 4px 0 0 var(--c); }
+.plan .occ b { font-family: var(--display); font-size: 17px; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.plan .empty { color: var(--line); }
+.plan .meal { color: var(--muted); }
+.plan .max td { font-family: var(--display); font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+.plan .ok { font-size: 17px; font-weight: 700; }
+.plan .lab { display: flex; align-items: center; gap: 8px; }
+.plan .lab svg { width: 20px; height: 20px; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* rosters */
+.rosters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.box { background: var(--paper); border: 2px solid var(--c); display: flex; flex-direction: column; min-width: 0; }
+.box.wide { grid-column: 1 / -1; }
+.box header { border-bottom: 2px solid var(--c); padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.box header h3 { font-size: 16px; }
+.box header span { font-size: 13px; color: var(--muted); }
+.box header b { font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; flex: none; }
+.box .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.box .sub { font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 8px; }
+.box .sub span { font-weight: 400; color: var(--muted); }
+.names { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 6px; }
+.nm { border: 1px solid var(--line); padding: 6px 8px; display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.nm small { font-size: 11.5px; color: var(--muted); }
+.nm b { font-size: 14.5px; font-weight: 700; }
+.nm.staff { border-style: dashed; border-color: var(--ink); }
+
+/* attendance */
+table.att { min-width: 760px; }
 .att td:first-child { font-weight: 700; text-align: left; }
 .att td.dim { color: var(--muted); font-size: 13px; }
+.att td.memo { color: var(--muted); font-size: 12.5px; text-align: left; }
 .att td.sum { font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
 .att tr.total td { border-top: 2px solid var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
 
+/* common prep */
+.list { background: var(--paper); border: 1px solid var(--line); margin: 0; padding: 0; list-style: none; }
+.list li { display: grid; grid-template-columns: 24px 120px 1fr; gap: 12px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--faint); font-size: 14px; }
+.list li:first-child { border-top: 0; }
+.list svg { width: 22px; height: 22px; stroke: var(--ink); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
 /* deadlines */
-.steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; position: relative; }
+.steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: relative; }
 .step { display: flex; flex-direction: column; gap: 8px; padding-right: 12px; position: relative; min-width: 0; }
 .step::before { content: ""; height: 3px; background: var(--ink); display: block; margin-right: -12px; }
 .step:last-child::before { margin-right: 0; }
-.step .pin { position: absolute; top: -6px; left: 0; width: 13px; height: 13px; background: var(--paper); border: 3px solid var(--ink); }
+.step .pin { position: absolute; top: -5px; left: 0; width: 13px; height: 13px; background: var(--paper); border: 3px solid var(--ink); }
 .step.now .pin { background: var(--alert); border-color: var(--alert); }
 .step b { font-family: var(--display); font-size: 17px; margin-top: 8px; }
 .step ul { margin: 0; padding-left: 16px; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
 
+@media (max-width: 820px) {
+  .rosters { grid-template-columns: 1fr; }
+}
 @media (max-width: 720px) {
   .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rooms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .steps { grid-template-columns: 1fr; gap: 0; }
+  .list li { grid-template-columns: 24px 1fr; row-gap: 2px; }
+  .list li span { grid-column: 2; color: var(--muted); }
+  .steps { grid-template-columns: 1fr; }
   .step { padding: 0 0 18px 26px; }
-  .step::before { position: absolute; left: 6px; top: 0; bottom: 0; width: 3px; height: auto; margin: 0; }
+  .step::before { position: absolute; left: 5px; top: 0; bottom: 0; width: 3px; height: auto; margin: 0; }
   .step:last-child::before { bottom: auto; height: 14px; }
   .step .pin { top: 2px; left: 0; }
   .step b { margin-top: 0; }
-  .trow { grid-template-columns: 78px 1fr 28px; }
-  .trow .dots i { width: 13px; height: 13px; }
 }
-@media (max-width: 420px) { .rooms { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -175,54 +159,66 @@ table.att { border-collapse: collapse; width: 100%; min-width: 600px; font-size:
       <div class="fact"><span>일시</span><b class="num">12. 10.(목)</b></div>
       <div class="fact"><span>시간</span><b class="num">10:30 – 16:30</b></div>
       <div class="fact"><span>장소</span><b>평택교회</b></div>
-      <div class="fact"><span>인원 · 복장</span><b>53명 · 세미정장</b></div>
+      <div class="fact"><span>인원 · 복장</span><b>55명 · 세미정장</b></div>
     </div>
   </header>
 
   <section>
-    <h2>하루 흐름 <small>어느 시간에 어느 공간을 몇 명이 쓰는지</small></h2>
-    <div class="scroll">
-      <div class="gantt" id="gantt"></div>
+    <h2>시간·공간별 준비 <small>위는 시간대별 인원, 아래는 공간별 준비물(○)</small></h2>
+    <div class="tbl-wrap scroll">
+      <table class="plan">
+        <thead>
+          <tr><th style="width:150px"></th><th>전체 모임 장소</th><th>공간 1</th><th>공간 2</th><th>공간 3</th><th>공간 4</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>10:30–12:00<small>전체 모임</small></th><td class="occ" style="--c:var(--g0)">전체<b>55</b></td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td></tr>
+          <tr><th>12:00–13:00<small>점심</small></th><td class="meal" colspan="5">교회 내 또는 외부</td></tr>
+          <tr><th>13:00–14:30<small>과별 1부</small></th><td class="empty">–</td><td class="occ" style="--c:var(--g1)">부장·총무·서무<b>31</b></td><td class="empty">–</td><td class="occ" style="--c:var(--g3)">목선과<b>11</b></td><td class="occ" style="--c:var(--g4)">통번역과<b>10</b></td></tr>
+          <tr><th>14:30–16:20<small>과별 2부</small></th><td class="empty">–</td><td class="occ" style="--c:var(--g1)">부장·총무<b>18</b></td><td class="occ" style="--c:var(--g2)">서무<b>13</b></td><td class="occ" style="--c:var(--g3)">목선과<b>11</b></td><td class="occ" style="--c:var(--g4)">통번역과<b>10</b></td></tr>
+          <tr><th>16:20–16:30<small>마무리</small></th><td class="occ" style="--c:var(--g0)">전체<b>55</b></td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td></tr>
+          <tr class="split max"><th>최대 인원</th><td>55</td><td>31</td><td>13</td><td>11</td><td>10</td></tr>
+          <tr><th><span class="lab"><svg><use href="#i-desk"/></svg>책상·의자</span></th><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
+          <tr><th><span class="lab"><svg><use href="#i-mic"/></svg>마이크</span></th><td class="ok">○</td><td class="ok">○</td><td></td><td></td><td></td></tr>
+          <tr><th><span class="lab"><svg><use href="#i-board"/></svg>전자칠판</span></th><td class="ok">○</td><td></td><td></td><td></td><td></td></tr>
+          <tr><th><span class="lab"><svg><use href="#i-tv"/></svg>TV</span></th><td></td><td class="ok">○</td><td class="ok">○</td><td></td><td class="ok">○</td></tr>
+          <tr><th><span class="lab"><svg><use href="#i-rec"/></svg>녹화</span></th><td class="ok">○</td><td></td><td></td><td></td><td></td></tr>
+          <tr><th><span class="lab"><svg><use href="#i-banner"/></svg>현수막</span></th><td class="ok">○</td><td></td><td></td><td></td><td></td></tr>
+          <tr><th><span class="lab"><svg><use href="#i-plate"/></svg>명패·좌석 배치</span></th><td></td><td class="ok">○</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
     </div>
-    <div class="legend" id="legend"></div>
-  </section>
-
-  <section>
-    <h2>공간별 준비 <small>아이콘 = 준비할 것</small></h2>
-    <div class="rooms" id="rooms"></div>
     <p class="note">책상과 의자는 모든 공간에 배치하고, 어려우면 좌식책상으로 대체합니다.</p>
   </section>
 
   <section>
-    <h2>공통 준비</h2>
-    <div class="chips">
-      <div class="chip"><svg><use href="#i-bag"/></svg>짐(외투) 보관 장소</div>
-      <div class="chip"><svg><use href="#i-sound"/></svg>음향 담당 상주 또는 사용법 안내</div>
-      <div class="chip"><svg><use href="#i-laptop"/></svg>노트북 연결·소리 출력 확인</div>
-      <div class="chip"><svg><use href="#i-wifi"/></svg>와이파이 정보, 멀티탭</div>
-      <div class="chip"><svg><use href="#i-heat"/></svg>09:00 전 난방 가동</div>
-      <div class="chip"><svg><use href="#i-rec"/></svg>녹화 장비·담당자</div>
-      <div class="chip"><svg><use href="#i-banner"/></svg>현수막 설치 (문구는 총회)</div>
-      <div class="chip"><svg><use href="#i-plate"/></svg>공간 1 명패·좌석 배치 (명단은 총회)</div>
-      <div class="chip"><svg><use href="#i-meal"/></svg>점심 장소 결정, 외부면 1인 금액</div>
-      <div class="chip"><svg><use href="#i-cup"/></svg>다과 준비, 예상 비용 산출</div>
-      <div class="chip"><svg><use href="#i-car"/></svg>주차 대수, 주소·교통편</div>
-    </div>
+    <h2>공간별 명단</h2>
+    <div class="rosters" id="rosters"></div>
   </section>
 
   <section>
-    <h2>지파별 참석 <small>총 53명</small></h2>
+    <h2>공통 준비</h2>
+    <ul class="list">
+      <li><svg><use href="#i-bag"/></svg><b>짐 보관</b><span>외투와 짐 보관 장소 마련</span></li>
+      <li><svg><use href="#i-sound"/></svg><b>음향</b><span>담당자 상주, 어려우면 총회 스텝에게 사용법 안내</span></li>
+      <li><svg><use href="#i-laptop"/></svg><b>노트북</b><span>연결 단자, 소리 출력 확인</span></li>
+      <li><svg><use href="#i-wifi"/></svg><b>와이파이·전원</b><span>접속 정보 공유, 멀티탭 준비</span></li>
+      <li><svg><use href="#i-heat"/></svg><b>난방</b><span>당일 09:00 전 가동</span></li>
+      <li><svg><use href="#i-rec"/></svg><b>녹화</b><span>전체 모임 녹화 장비와 담당자 지정</span></li>
+      <li><svg><use href="#i-banner"/></svg><b>현수막</b><span>설치 위치와 방법 확인 (문구는 총회 제공)</span></li>
+      <li><svg><use href="#i-plate"/></svg><b>명패</b><span>공간 1 명패 준비, 좌석 배치 (명단은 총회 제공)</span></li>
+      <li><svg><use href="#i-meal"/></svg><b>점심</b><span>교회 내 또는 외부 결정, 외부면 1인당 지참 금액</span></li>
+      <li><svg><use href="#i-cup"/></svg><b>다과</b><span>생수, 커피·차, 간식 준비, 예상 비용 산출</span></li>
+      <li><svg><use href="#i-car"/></svg><b>주차·교통</b><span>주차 가능 대수, 주소와 교통편 안내</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>지파별 참석 <small>총 55명</small></h2>
     <div class="tbl-wrap scroll">
       <table class="att">
-        <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th><th>계</th></tr></thead>
-        <tbody id="names"></tbody>
+        <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th><th>계</th><th>비고</th></tr></thead>
+        <tbody id="att"></tbody>
       </table>
-    </div>
-    <div class="flags">
-      <div class="flag"><b>과별 모임 50명</b>총 53명 중 3명은 전체 모임만 참석</div>
-      <div class="flag"><b>총회</b>기획과장은 과별 모임 없음</div>
-      <div class="flag"><b>목선 모임</b>빌립·마태·도마·안드레·맛디아·서울야고보 총무는 목선 모임 참석</div>
-      <div class="flag"><b>요한</b>목선과장/통번역과장은 전체 모임만, 재정과장은 과별 모임 없음</div>
     </div>
   </section>
 
@@ -234,87 +230,45 @@ table.att { border-collapse: collapse; width: 100%; min-width: 600px; font-size:
 </main>
 
 <script>
-const G = {
-  g1: { name: '부장·총무', color: 'var(--g1)' },
-  g2: { name: '서무', color: 'var(--g2)' },
-  g3: { name: '목회자선교과', color: 'var(--g3)' },
-  g4: { name: '통번역과', color: 'var(--g4)' },
-  g0: { name: '전체 모임만', color: 'var(--g0)' },
-};
-const legend = keys => keys.map(k => `<span><i style="background:${G[k].color}"></i>${G[k].name}</span>`).join('');
-const dots = (n, color) => Array.from({ length: n }, () => `<i style="background:${color}"></i>`).join('');
-
-// timeline: 10:30 -> 16:30
-const T0 = 630, SPAN = 360;
-const m = s => { const [h, mm] = s.split(':').map(Number); return h * 60 + mm; };
-const pos = s => ((m(s) - T0) / SPAN * 100).toFixed(3) + '%';
-const lanes = [
-  { lab: '전체 모임 장소', sub: '53명', blocks: [['10:30', '12:00', 'var(--g1)', '전체 모임 53명'], ['16:20', '16:30', 'var(--g1)', '']] },
-  { lab: '점심', sub: '교회 내 또는 외부', blocks: [['12:00', '13:00', 'var(--meal)', '식사', 'meal']] },
-  { lab: '공간 1', sub: '최대 29명', blocks: [['13:00', '14:30', 'linear-gradient(90deg,var(--g1) 55%,var(--g2) 55%)', '부장·총무·서무 29'], ['14:30', '16:20', 'var(--g1)', '부장·총무 16']] },
-  { lab: '공간 2', sub: '13명', blocks: [['14:30', '16:20', 'var(--g2)', '서무 13']] },
-  { lab: '공간 3', sub: '11명', blocks: [['13:00', '16:20', 'var(--g3)', '목회자선교과 11']] },
-  { lab: '공간 4', sub: '10명', blocks: [['13:00', '16:20', 'var(--g4)', '통번역과 10']] },
+// [지파, 부장, 총무, 서무, 목선과장, 통번역과장, 계, 비고]
+const att = [
+  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주', 8, '기획과장 전체 모임만, 김선림·송나예 부총서 모임'],
+  ['요한', '홍혜정', '전윤정', '류기원', '전체 모임만', '전체 모임만', 5, '재정과장 과별 모임 없음'],
+  ['베드로', '민경', '김종대', '정혜련', '김경렬', '박선영', 5, ''],
+  ['부산야고보', '김현지', '홍미란', '조석현', '김종훈', '강동균', 5, ''],
+  ['안드레', '이재인', '목선 모임', '허보윤', '박선경(총무)', '불참', 3, ''],
+  ['다대오', '오채린', '불참', '송현아', '홍진영', '박지수', 4, ''],
+  ['빌립', '김경환', '목선 모임', '이세은', '이건호(총무)', '불참', 3, '이세은 목선과장 겸직'],
+  ['시몬', '김민주', '불참', '김지원', '불참', '김지현', 3, ''],
+  ['바돌로매', '지도방문', '정효영', '유태현', '김다은', '박선하', 4, ''],
+  ['마태', '이정미', '목선 모임', '이선아', '주예현(총무)', '김규리', 4, ''],
+  ['맛디아', '박종열', '목선 모임', '김명옥', '최원석(총무)', '성예은', 4, ''],
+  ['서울야고보', '김대중', '목선 모임', '박춘연', '김영희(총무)', '장춘화', 4, ''],
+  ['도마', '이상대', '목선 모임', '강하니', '박재경(총무)', '불참', 3, ''],
 ];
-let gh = '';
-for (const l of lanes) {
-  gh += `<div class="lab">${l.lab}<em>${l.sub}</em></div><div class="lane">`;
-  for (const [a, b, bg, txt, cls] of l.blocks) {
-    gh += `<div class="blk ${cls || ''}" style="left:${pos(a)};width:calc(${pos(b)} - ${pos(a)});background:${bg}" title="${a}–${b}">${txt}</div>`;
-  }
-  gh += `</div>`;
-}
-gh += `<div></div><div class="axis num">${['10:30', '12:00', '13:00', '14:30', '16:20', '16:30'].map((t, i, arr) => `<span style="left:${pos(t)}">${i === arr.length - 2 ? '' : t}</span>`).join('')}</div>`;
-gh += `<div></div><div class="note">13:00–14:30 과별 1부 · 14:30–16:20 과별 2부 · 16:20 마무리</div>`;
-document.getElementById('gantt').innerHTML = gh;
-document.getElementById('legend').innerHTML = legend(['g1', 'g2', 'g3', 'g4']);
+const dim = c => /불참|전체 모임만|목선 모임|지도방문/.test(c);
+document.getElementById('att').innerHTML = att.map(r =>
+  `<tr>${r.slice(0, 6).map(c => `<td class="${dim(c) ? 'dim' : ''}">${c}</td>`).join('')}<td class="sum">${r[6]}</td><td class="memo">${r[7]}</td></tr>`
+).join('') + `<tr class="total"><td>합계</td><td>12</td><td>4</td><td>13</td><td>11</td><td>10</td><td class="sum">55</td><td class="memo">기타 5명 (전체 모임만 3, 총회 스텝 2)</td></tr>`;
 
-// rooms
-const TOOLS = [['desk', '책상·의자'], ['mic', '마이크'], ['board', '전자칠판'], ['tv', 'TV'], ['rec', '녹화'], ['banner', '현수막'], ['plate', '명패']];
-const rooms = [
-  { name: '전체 모임 장소', big: true, who: '10:30–12:00 · 16:20–16:30', cnt: 53, mix: [[16, 'g1'], [13, 'g2'], [11, 'g3'], [10, 'g4'], [3, 'g0']], need: { desk: 1, mic: 1, board: 1, rec: 1, banner: 1 } },
-  { name: '공간 1', who: '부장·총무 (1부는 서무 포함)', cnt: 29, extra: '2부 16명', mix: [[16, 'g1'], [13, 'g2']], need: { desk: 1, mic: 1, tv: 1, plate: 1 } },
-  { name: '공간 2', who: '서무 · 2부만', cnt: 13, mix: [[13, 'g2']], need: { desk: 1, tv: 1 } },
-  { name: '공간 3', who: '목회자선교과', cnt: 11, mix: [[11, 'g3']], need: { desk: 1 } },
-  { name: '공간 4', who: '통번역과', cnt: 10, mix: [[10, 'g4']], need: { desk: 1, tv: 1 } },
-];
-document.getElementById('rooms').innerHTML = rooms.map(r => {
-  const kit = TOOLS.filter(([k]) => r.need[k]).map(([k, label]) => {
-    const ask = r.need[k] === 'ask';
-    return `<div class="tool ${ask ? 'ask' : ''}"><svg><use href="#i-${k}"/></svg>${label}${ask ? '?' : ''}</div>`;
-  }).join('');
-  return `<article class="room ${r.big ? 'big' : ''}">
-    <div class="top"><h3>${r.name}</h3><div class="cnt num">${r.cnt}<small>명</small></div></div>
-    <div class="who">${r.who}${r.extra ? ' · ' + r.extra : ''}</div>
-    <div class="kit">${kit}</div>
-  </article>`;
-}).join('');
-
-// tribes: [name, 부총, 서무, 목선, 통번역, 전체만]
-const tribes = [
-  ['총회', 1, 1, 1, 2, 1], ['요한', 2, 1, 0, 0, 2], ['베드로', 2, 1, 1, 1, 0], ['부산야고보', 2, 1, 1, 1, 0],
-  ['안드레', 1, 1, 1, 0, 0], ['다대오', 1, 1, 1, 1, 0], ['빌립', 1, 1, 1, 0, 0], ['시몬', 1, 1, 0, 1, 0],
-  ['바돌로매', 1, 1, 1, 1, 0], ['마태', 1, 1, 1, 1, 0], ['맛디아', 1, 1, 1, 1, 0], ['서울야고보', 1, 1, 1, 1, 0], ['도마', 1, 1, 1, 0, 0],
-];
-
-const names = [
-  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주'],
-  ['요한', '홍혜정', '전윤정', '류기원', '전체 모임만', '전체 모임만'],
-  ['베드로', '민경', '김종대', '정혜련', '김경렬', '박선영'],
-  ['부산야고보', '김현지', '홍미란', '조석현', '김종훈', '강동균'],
-  ['안드레', '이재인', '목선 모임', '허보윤', '박선경(총무)', '불참'],
-  ['다대오', '오채린', '불참', '송현아', '홍진영', '박지수'],
-  ['빌립', '김경환', '목선 모임', '이세은', '이건호(총무)', '불참'],
-  ['시몬', '김민주', '불참', '김지원', '불참', '김지현'],
-  ['바돌로매', '지도방문', '정효영', '유태현', '김다은', '박선하'],
-  ['마태', '이정미', '목선 모임', '이선아', '주예현(총무)', '김규리'],
-  ['맛디아', '박종열', '목선 모임', '김명옥', '최원석(총무)', '성예은'],
-  ['서울야고보', '김대중', '목선 모임', '박춘연', '김영희(총무)', '장춘화'],
-  ['도마', '이상대', '목선 모임', '강하니', '박재경(총무)', '불참'],
-];
-const cnt = Object.fromEntries(tribes.map(t => [t[0], t.slice(1).reduce((a, b) => a + b, 0)]));
-document.getElementById('names').innerHTML = names.map(r => `<tr>${r.map(c => `<td class="${/불참|전체 모임만|목선 모임|지도방문/.test(c) ? 'dim' : ''}">${c}</td>`).join('')}<td class="sum">${cnt[r[0]]}</td></tr>`).join('')
-  + `<tr class="total"><td>합계</td><td>12</td><td>4</td><td>13</td><td>11</td><td>10</td><td class="sum">53</td></tr>`;
+// rosters
+const P = (t, n, staff) => `<div class="nm ${staff ? 'staff' : ''}"><small>${t}</small><b>${n}</b></div>`;
+const grid = list => `<div class="names">${list.map(([t, n, s]) => P(t, n, s)).join('')}</div>`;
+const leaders = [['총회 부장', '박근영'], ['요한 부장', '홍혜정'], ['요한 총무', '전윤정'], ['베드로 부장', '민경'], ['베드로 총무', '김종대'], ['부산야고보 부장', '김현지'], ['부산야고보 총무', '홍미란'], ['안드레 부장', '이재인'], ['다대오 부장', '오채린'], ['빌립 부장', '김경환'], ['시몬 부장', '김민주'], ['바돌로매 총무', '정효영'], ['마태 부장', '이정미'], ['맛디아 부장', '박종열'], ['서울야고보 부장', '김대중'], ['도마 부장', '이상대'], ['총회 스텝', '김선림', 1], ['총회 스텝', '송나예', 1]];
+const clerks = [['총회', '이연희'], ['요한', '류기원'], ['베드로', '정혜련'], ['부산야고보', '조석현'], ['안드레', '허보윤'], ['다대오', '송현아'], ['빌립', '이세은'], ['시몬', '김지원'], ['바돌로매', '유태현'], ['마태', '이선아'], ['맛디아', '김명옥'], ['서울야고보', '박춘연'], ['도마', '강하니']];
+const pastoral = [['총회', '이수진'], ['베드로', '김경렬'], ['부산야고보', '김종훈'], ['안드레 총무', '박선경'], ['다대오', '홍진영'], ['빌립 총무', '이건호'], ['바돌로매', '김다은'], ['마태 총무', '주예현'], ['맛디아 총무', '최원석'], ['서울야고보 총무', '김영희'], ['도마 총무', '박재경']];
+const interp = [['총회', '김꽃별'], ['총회', '이연주'], ['베드로', '박선영'], ['부산야고보', '강동균'], ['다대오', '박지수'], ['시몬', '김지현'], ['바돌로매', '박선하'], ['마태', '김규리'], ['맛디아', '성예은'], ['서울야고보', '장춘화']];
+const box = (c, title, tag, n, body, wide) => `<article class="box ${wide ? 'wide' : ''}" style="--c:${c}"><header><div><h3>${title}</h3><span>${tag}</span></div><b>${n}명</b></header><div class="body">${body}</div></article>`;
+document.getElementById('rosters').innerHTML = [
+  box('var(--g1)', '공간 1 · 부장·총무 모임', '13:00–16:20', 18,
+    `<div class="sub">부장·총무 16 + 총회 스텝 2<span>1부·2부 모두</span></div>${grid(leaders)}<p class="note">1부(13:00–14:30)에는 서무 13명이 함께해서 31명입니다. 점선 칸은 총회 스텝입니다.</p>`, true),
+  box('var(--g2)', '공간 2 · 서무 모임', '1부 공간 1 → 2부 공간 2', 13,
+    `${grid(clerks)}`),
+  box('var(--g3)', '공간 3 · 목회자선교과', '13:00–16:20', 11,
+    `<div class="sub">목선과장 5 + 겸직 총무 6</div>${grid(pastoral)}`),
+  box('var(--g4)', '공간 4 · 통번역과', '13:00–16:20', 10,
+    `${grid(interp)}`),
+].join('');
 
 // deadlines
 const steps = [
