@@ -159,7 +159,7 @@ table.att { min-width: 760px; }
       <div class="fact"><span>일시</span><b class="num">12. 10.(목)</b></div>
       <div class="fact"><span>시간</span><b class="num">10:30 – 16:30</b></div>
       <div class="fact"><span>장소</span><b>평택교회</b></div>
-      <div class="fact"><span>인원 · 복장</span><b>54명 · 세미정장</b></div>
+      <div class="fact"><span>인원 · 복장</span><b>53명 · 세미정장</b></div>
     </div>
   </header>
 
@@ -171,12 +171,12 @@ table.att { min-width: 760px; }
           <tr><th style="width:150px"></th><th>전체 모임 장소</th><th>공간 1</th><th>공간 2</th><th>공간 3</th><th>공간 4</th></tr>
         </thead>
         <tbody>
-          <tr><th>10:30–12:00<small>전체 모임</small></th><td class="occ" style="--c:var(--g0)">전체<b>54</b></td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td></tr>
+          <tr><th>10:30–12:00<small>전체 모임</small></th><td class="occ" style="--c:var(--g0)">전체<b>53</b></td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td></tr>
           <tr><th>12:00–13:00<small>점심</small></th><td class="meal" colspan="5">교회 내 또는 외부</td></tr>
           <tr><th>13:00–14:30<small>과별 1부</small></th><td class="empty">–</td><td class="occ" style="--c:var(--g1)">부장·총무·서무<b>31</b></td><td class="empty">–</td><td class="occ" style="--c:var(--g3)">목선과<b>11</b></td><td class="occ" style="--c:var(--g4)">통번역과<b>10</b></td></tr>
           <tr><th>14:30–16:20<small>과별 2부</small></th><td class="empty">–</td><td class="occ" style="--c:var(--g1)">부장·총무<b>18</b></td><td class="occ" style="--c:var(--g2)">서무<b>13</b></td><td class="occ" style="--c:var(--g3)">목선과<b>11</b></td><td class="occ" style="--c:var(--g4)">통번역과<b>10</b></td></tr>
-          <tr><th>16:20–16:30<small>마무리</small></th><td class="occ" style="--c:var(--g0)">전체<b>54</b></td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td></tr>
-          <tr class="split max"><th>최대 인원</th><td>54</td><td>31</td><td>13</td><td>11</td><td>10</td></tr>
+          <tr><th>16:20–16:30<small>마무리</small></th><td class="occ" style="--c:var(--g0)">전체<b>53</b></td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td><td class="empty">–</td></tr>
+          <tr class="split max"><th>최대 인원</th><td>53</td><td>31</td><td>13</td><td>11</td><td>10</td></tr>
           <tr><th><span class="lab"><svg><use href="#i-desk"/></svg>책상·의자</span></th><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
           <tr><th><span class="lab"><svg><use href="#i-mic"/></svg>마이크</span></th><td class="ok">○</td><td class="ok">○</td><td></td><td></td><td></td></tr>
           <tr><th><span class="lab"><svg><use href="#i-board"/></svg>전자칠판</span></th><td class="ok">○</td><td></td><td></td><td></td><td></td></tr>
@@ -213,7 +213,7 @@ table.att { min-width: 760px; }
   </section>
 
   <section>
-    <h2>지파별 참석 <small>총 54명</small></h2>
+    <h2>지파별 참석 <small>총 53명</small></h2>
     <div class="tbl-wrap scroll">
       <table class="att">
         <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th><th>계</th><th>비고</th></tr></thead>
@@ -232,8 +232,8 @@ table.att { min-width: 760px; }
 <script>
 // [지파, 부장, 총무, 서무, 목선과장, 통번역과장, 계, 비고]
 const att = [
-  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주', 7, '기획과장 송나예, 스텝 김선림 부총서 모임'],
-  ['요한', '홍혜정', '전윤정', '류기원', '전체 모임만', '전체 모임만', 5, '재정과장 과별 모임 없음'],
+  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주', 6, '기획과장 송나예 부총서 모임'],
+  ['요한', '홍혜정', '전윤정', '류기원', '전체 모임만', '전체 모임만', 5, '재정과장 김선림 스텝으로 부총서 모임'],
   ['베드로', '민경', '김종대', '정혜련', '김경렬', '박선영', 5, ''],
   ['부산야고보', '김현지', '홍미란', '조석현', '김종훈', '강동균', 5, ''],
   ['안드레', '이재인', '목선 모임', '허보윤', '박선경(총무)', '불참', 3, ''],
@@ -249,19 +249,19 @@ const att = [
 const dim = c => /불참|전체 모임만|목선 모임|지도방문/.test(c);
 document.getElementById('att').innerHTML = att.map(r =>
   `<tr>${r.slice(0, 6).map(c => `<td class="${dim(c) ? 'dim' : ''}">${c}</td>`).join('')}<td class="sum">${r[6]}</td><td class="memo">${r[7]}</td></tr>`
-).join('') + `<tr class="total"><td>합계</td><td>12</td><td>4</td><td>13</td><td>11</td><td>10</td><td class="sum">54</td><td class="memo">기타 4명 (요한 전체 모임만 2, 총회 기획과장·스텝 2)</td></tr>`;
+).join('') + `<tr class="total"><td>합계</td><td>12</td><td>4</td><td>13</td><td>11</td><td>10</td><td class="sum">53</td><td class="memo">기타 3명 (요한 목선·통번역과장 전체 모임만, 총회 기획과장, 요한 재정과장)</td></tr>`;
 
 // rosters
 const P = (t, n, staff) => `<div class="nm ${staff ? 'staff' : ''}"><small>${t}</small><b>${n}</b></div>`;
 const grid = list => `<div class="names">${list.map(([t, n, s]) => P(t, n, s)).join('')}</div>`;
-const leaders = [['총회 부장', '박근영'], ['요한 부장', '홍혜정'], ['요한 총무', '전윤정'], ['베드로 부장', '민경'], ['베드로 총무', '김종대'], ['부산야고보 부장', '김현지'], ['부산야고보 총무', '홍미란'], ['안드레 부장', '이재인'], ['다대오 부장', '오채린'], ['빌립 부장', '김경환'], ['시몬 부장', '김민주'], ['바돌로매 총무', '정효영'], ['마태 부장', '이정미'], ['맛디아 부장', '박종열'], ['서울야고보 부장', '김대중'], ['도마 부장', '이상대'], ['총회 스텝', '김선림', 1], ['총회 기획과장', '송나예', 1]];
+const leaders = [['총회 부장', '박근영'], ['요한 부장', '홍혜정'], ['요한 총무', '전윤정'], ['베드로 부장', '민경'], ['베드로 총무', '김종대'], ['부산야고보 부장', '김현지'], ['부산야고보 총무', '홍미란'], ['안드레 부장', '이재인'], ['다대오 부장', '오채린'], ['빌립 부장', '김경환'], ['시몬 부장', '김민주'], ['바돌로매 총무', '정효영'], ['마태 부장', '이정미'], ['맛디아 부장', '박종열'], ['서울야고보 부장', '김대중'], ['도마 부장', '이상대'], ['요한 재정과장(스텝)', '김선림', 1], ['총회 기획과장', '송나예', 1]];
 const clerks = [['총회', '이연희'], ['요한', '류기원'], ['베드로', '정혜련'], ['부산야고보', '조석현'], ['안드레', '허보윤'], ['다대오', '송현아'], ['빌립', '이세은'], ['시몬', '김지원'], ['바돌로매', '유태현'], ['마태', '이선아'], ['맛디아', '김명옥'], ['서울야고보', '박춘연'], ['도마', '강하니']];
 const pastoral = [['총회', '이수진'], ['베드로', '김경렬'], ['부산야고보', '김종훈'], ['안드레 총무', '박선경'], ['다대오', '홍진영'], ['빌립 총무', '이건호'], ['바돌로매', '김다은'], ['마태 총무', '주예현'], ['맛디아 총무', '최원석'], ['서울야고보 총무', '김영희'], ['도마 총무', '박재경']];
 const interp = [['총회', '김꽃별'], ['총회', '이연주'], ['베드로', '박선영'], ['부산야고보', '강동균'], ['다대오', '박지수'], ['시몬', '김지현'], ['바돌로매', '박선하'], ['마태', '김규리'], ['맛디아', '성예은'], ['서울야고보', '장춘화']];
 const box = (c, title, tag, n, body, wide) => `<article class="box ${wide ? 'wide' : ''}" style="--c:${c}"><header><div><h3>${title}</h3><span>${tag}</span></div><b>${n}명</b></header><div class="body">${body}</div></article>`;
 document.getElementById('rosters').innerHTML = [
   box('var(--g1)', '공간 1 · 부장·총무 모임', '13:00–16:20', 18,
-    `<div class="sub">부장·총무 16 + 총회 기획과장·스텝 2<span>1부·2부 모두</span></div>${grid(leaders)}<p class="note">1부(13:00–14:30)에는 서무 13명이 함께해서 31명입니다. 점선 칸은 총회 기획과장과 스텝입니다.</p>`, true),
+    `<div class="sub">부장·총무 16 + 총회 기획과장 1 + 요한 재정과장 1<span>1부·2부 모두</span></div>${grid(leaders)}<p class="note">1부(13:00–14:30)에는 서무 13명이 함께해서 31명입니다. 점선 칸은 총회 기획과장과 요한 재정과장(스텝)입니다.</p>`, true),
   box('var(--g2)', '공간 2 · 서무 모임', '1부 공간 1 → 2부 공간 2', 13,
     `${grid(clerks)}`),
   box('var(--g3)', '공간 3 · 목회자선교과', '13:00–16:20', 11,
