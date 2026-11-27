@@ -99,9 +99,10 @@ table.plan { min-width: 720px; table-layout: fixed; }
 @media (max-width: 720px) { .rows .names { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* attendance */
-table.att { min-width: 760px; }
+table.att { min-width: 820px; }
 .att td:first-child { font-weight: 700; text-align: left; }
-.att td.dim { color: var(--muted); font-size: 13px; }
+.att td.name { font-weight: 700; color: var(--ink); }
+.att td.dim { color: var(--muted); opacity: .6; font-size: 12.5px; font-weight: 400; }
 .att td.memo { color: var(--muted); font-size: 12.5px; text-align: left; }
 .att td.sum { font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
 .att tr.total td { border-top: 2px solid var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -221,7 +222,7 @@ table.att { min-width: 760px; }
     <h2>지파별 참석 <small>총 53명</small></h2>
     <div class="tbl-wrap scroll">
       <table class="att">
-        <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th><th>계</th><th>비고</th></tr></thead>
+        <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th><th>기타</th><th>계</th><th>비고</th></tr></thead>
         <tbody id="att"></tbody>
       </table>
     </div>
@@ -237,24 +238,25 @@ table.att { min-width: 760px; }
 <script>
 // [지파, 부장, 총무, 서무, 목선과장, 통번역과장, 계, 비고]
 const att = [
-  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주(서기)', 6, '기획과장 송나예 부총서 모임'],
-  ['요한', '홍혜정', '전윤정', '류기원', '전체 모임만', '전체 모임만', 5, '재정과장 김선림 스텝으로 부총서 모임'],
-  ['베드로', '민경', '김종대', '정혜련', '김경렬', '박선영', 5, ''],
-  ['부산야고보', '김현지', '홍미란', '조석현', '김종훈', '강동균', 5, ''],
-  ['안드레', '이재인', '목선 모임', '허보윤', '박선경(총무)', '불참', 3, ''],
-  ['다대오', '오채린', '불참', '송현아', '홍진영', '박지수', 4, ''],
-  ['빌립', '김경환', '목선 모임', '이세은', '이건호(총무)', '불참', 3, '이세은 목선과장 겸직'],
-  ['시몬', '김민주', '불참', '김지원', '불참', '김지현', 3, ''],
-  ['바돌로매', '지도방문', '정효영', '유태현', '김다은', '박선하', 4, ''],
-  ['마태', '이정미', '목선 모임', '이선아', '주예현(총무)', '김규리', 4, ''],
-  ['맛디아', '박종열', '목선 모임', '김명옥', '최원석(총무)', '성예은', 4, ''],
-  ['서울야고보', '김대중', '목선 모임', '박춘연', '김영희(총무)', '장춘화', 4, ''],
-  ['도마', '이상대', '목선 모임', '강하니', '박재경(총무)', '불참', 3, ''],
+  // [지파, 부장, 총무, 서무, 목선과장, 통번역과장, 기타, 계, 비고]
+  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주(서기)', '송나예', 6, ''],
+  ['요한', '홍혜정', '전윤정', '류기원', '(000)', '(000)', '김선림', 5, '목선·통번역과장 전체 모임만'],
+  ['베드로', '민경', '김종대', '정혜련', '김경렬', '박선영', '', 5, ''],
+  ['부산야고보', '김현지', '홍미란', '조석현', '김종훈', '강동균', '', 5, ''],
+  ['안드레', '이재인', '목선 모임', '허보윤', '박선경(총무)', '불참', '', 3, ''],
+  ['다대오', '오채린', '불참', '송현아', '홍진영', '박지수', '', 4, ''],
+  ['빌립', '김경환', '목선 모임', '이세은', '이건호(총무)', '불참', '', 3, '이세은 목선과장 겸직'],
+  ['시몬', '김민주', '불참', '김지원', '불참', '김지현', '', 3, ''],
+  ['바돌로매', '지도방문', '정효영', '유태현', '김다은', '박선하', '', 4, ''],
+  ['마태', '이정미', '목선 모임', '이선아', '주예현(총무)', '김규리', '', 4, ''],
+  ['맛디아', '박종열', '목선 모임', '김명옥', '최원석(총무)', '성예은', '', 4, ''],
+  ['서울야고보', '김대중', '목선 모임', '박춘연', '김영희(총무)', '장춘화', '', 4, ''],
+  ['도마', '이상대', '목선 모임', '강하니', '박재경(총무)', '불참', '', 3, ''],
 ];
-const dim = c => /불참|전체 모임만|목선 모임|지도방문/.test(c);
+const dim = c => /불참|전체 모임만|목선 모임|지도방문|\(000\)/.test(c);
 document.getElementById('att').innerHTML = att.map(r =>
-  `<tr>${r.slice(0, 6).map(c => `<td class="${dim(c) ? 'dim' : ''}">${c}</td>`).join('')}<td class="sum">${r[6]}</td><td class="memo">${r[7]}</td></tr>`
-).join('') + `<tr class="total"><td>합계</td><td>12</td><td>4</td><td>13</td><td>11</td><td>10</td><td class="sum">53</td><td class="memo">기타 3명 (요한 목선·통번역과장 전체 모임만, 총회 기획과장, 요한 재정과장)</td></tr>`;
+  `<tr><td>${r[0]}</td>${r.slice(1, 7).map(c => `<td class="${dim(c) ? 'dim' : (c ? 'name' : '')}">${c}</td>`).join('')}<td class="sum">${r[7]}</td><td class="memo">${r[8]}</td></tr>`
+).join('') + `<tr class="total"><td>합계</td><td>12</td><td>4</td><td>13</td><td>11</td><td>10</td><td></td><td class="sum">53</td><td class="memo">기타 3명</td></tr>`;
 
 // rosters
 const P = (t, n, cls) => `<div class="nm ${cls || ''}"><small>${t}</small><b>${n}</b></div>`;
