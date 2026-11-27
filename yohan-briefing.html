@@ -99,8 +99,11 @@ table.plan { min-width: 720px; table-layout: fixed; }
 @media (max-width: 720px) { .rows .names { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* attendance */
-table.att { min-width: 820px; }
+table.att { min-width: 860px; table-layout: fixed; }
 .att td:first-child { font-weight: 700; text-align: left; }
+.att th, .att td { padding-left: 6px; padding-right: 6px; }
+.att td { white-space: nowrap; }
+.att td.memo { white-space: normal; }
 .att td.name { font-weight: 700; color: var(--ink); }
 .att td.dim { color: var(--muted); opacity: .6; font-size: 12.5px; font-weight: 400; }
 .att td.memo { color: var(--muted); font-size: 12.5px; text-align: left; }
@@ -210,8 +213,8 @@ table.att { min-width: 820px; }
       <li><svg><use href="#i-wifi"/></svg><b>와이파이·전원</b><span>접속 정보 공유, 멀티탭 준비</span></li>
       <li><svg><use href="#i-heat"/></svg><b>난방</b><span>당일 09:00 전 가동</span></li>
       <li><svg><use href="#i-rec"/></svg><b>녹화</b><span>전체 모임 녹화 장비와 담당자 지정</span></li>
-      <li><svg><use href="#i-banner"/></svg><b>현수막</b><span>설치 위치와 방법 확인 (문구는 총회 제공)</span></li>
-      <li><svg><use href="#i-plate"/></svg><b>명패</b><span>공간 1 명패 준비, 좌석 배치 (명단은 총회 제공)</span></li>
+      <li><svg><use href="#i-banner"/></svg><b>현수막</b><span>설치 위치와 방법 확인 (문구는 정해서 전달 예정)</span></li>
+      <li><svg><use href="#i-plate"/></svg><b>명패</b><span>공간 1 명패 준비, 좌석 배치</span></li>
       <li><svg><use href="#i-meal"/></svg><b>점심</b><span>교회 내 또는 외부 결정, 외부면 1인당 지참 금액</span></li>
       <li><svg><use href="#i-cup"/></svg><b>다과</b><span>생수, 커피·차, 간식 준비, 예상 비용 산출</span></li>
       <li><svg><use href="#i-car"/></svg><b>주차·교통</b><span>주차 가능 대수, 주소와 교통편 안내</span></li>
@@ -222,6 +225,7 @@ table.att { min-width: 820px; }
     <h2>지파별 참석 <small>총 53명</small></h2>
     <div class="tbl-wrap scroll">
       <table class="att">
+        <colgroup><col span="8" style="width:10.75%"><col style="width:14%"></colgroup>
         <thead><tr><th>지파</th><th>부장</th><th>총무</th><th>서무</th><th>목선과장</th><th>통번역과장</th><th>기타</th><th>계</th><th>비고</th></tr></thead>
         <tbody id="att"></tbody>
       </table>
@@ -229,8 +233,11 @@ table.att { min-width: 820px; }
   </section>
 
   <section>
-    <h2>보고 일정</h2>
-    <div class="steps" id="steps"></div>
+    <h2>보고</h2>
+    <ul class="list">
+      <li><svg><use href="#i-laptop"/></svg><b>준비 완료</b><span>위 준비가 모두 끝나면 완료 보고</span></li>
+      <li><svg><use href="#i-rec"/></svg><b>12/9(수)</b><span>모든 공간 세팅 후 사진을 찍어 보고</span></li>
+    </ul>
   </section>
 
 </main>
@@ -239,8 +246,8 @@ table.att { min-width: 820px; }
 // [지파, 부장, 총무, 서무, 목선과장, 통번역과장, 계, 비고]
 const att = [
   // [지파, 부장, 총무, 서무, 목선과장, 통번역과장, 기타, 계, 비고]
-  ['총회', '박근영', '', '이연희', '이수진', '김꽃별, 이연주(서기)', '송나예', 6, ''],
-  ['요한', '홍혜정', '전윤정', '류기원', '(000)', '(000)', '김선림', 5, '목선·통번역과장 전체 모임만'],
+  ['총회', '박근영', '', '이연희', '이수진', '김꽃별·이연주', '송나예', 6, '이연주 통번역과 서기'],
+  ['요한', '홍혜정', '전윤정', '류기원', '홍서연', '홍서연', '김선림', 5, '홍서연 전체 모임만'],
   ['베드로', '민경', '김종대', '정혜련', '김경렬', '박선영', '', 5, ''],
   ['부산야고보', '김현지', '홍미란', '조석현', '김종훈', '강동균', '', 5, ''],
   ['안드레', '이재인', '목선 모임', '허보윤', '박선경(총무)', '불참', '', 3, ''],
@@ -285,16 +292,4 @@ document.getElementById('rosters').innerHTML = [
     `${grid(interp)}`),
 ].join('');
 
-// deadlines
-const steps = [
-  ['11/27(금)', ['공간 위치(층·호실)', '점심 장소·금액', '다과 비용', '주차·주소'], true],
-  ['12/4(금)', ['녹화 장비·담당', '현수막 설치 방법', '음향 담당 상주']],
-  ['12/8(화)', ['전자칠판 파일 실행 확인', 'TV 연결 확인 (공간 1·2·4)']],
-  ['12/9(수)', ['셋팅 완료 사진']],
-  ['12/10(목)', ['08:30 출입', '09:30 장비 점검']],
-  ['행사 후', ['원상복구', '다과비 정산']],
-];
-document.getElementById('steps').innerHTML = steps.map(([d, items, now]) =>
-  `<div class="step ${now ? 'now' : ''}"><span class="pin"></span><b class="num">${d}</b><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`
-).join('');
 </script>
