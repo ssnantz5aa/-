@@ -81,9 +81,9 @@ table.plan { min-width: 720px; table-layout: fixed; }
 .rosters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .box { background: var(--paper); border: 2px solid var(--c); display: flex; flex-direction: column; min-width: 0; }
 .box.wide { grid-column: 1 / -1; }
-.box header { border-bottom: 2px solid var(--c); padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.box header { background: var(--c); color: var(--paper); padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .box header h3 { font-size: 16px; }
-.box header span { font-size: 13px; color: var(--muted); }
+.box header span { font-size: 13px; color: var(--paper); opacity: .85; }
 .box header b { font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; flex: none; }
 .box .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
 .box .sub { font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 8px; }
